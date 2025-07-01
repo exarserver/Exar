@@ -118,7 +118,7 @@
 
 <header>
   <h1>SERVER EXAR</h1>
-  <img src="تصميم بدون عنوان.png" alt="شعار Exar" width="300" />
+  <img src="تصميم بدون عنوان.png" alt="شعار Exar" width="300" onerror="this.style.display='none';" />
 </header>
 
 <nav>
@@ -191,224 +191,248 @@
 </footer>
 
 <script>
-  // ⚠️ مهم جداً: غيّر هذا البريد الإلكتروني إلى بريدك الحقيقي
-  const YOUR_EMAIL = "exarserver@gmail.com";  // <-- البريد الخاص بك
-  
-  // إعدادات EmailJS
-  // Service ID: service_vaheead
-  // Template ID: template_vfvvecb
-  // Template Type: Contact Us
-  
-  // تهيئة EmailJS مع التحقق من التحميل
-  let emailjsReady = false;
-  
-  window.addEventListener('load', function() {
-    if (typeof emailjs !== 'undefined') {
-      emailjs.init("z8Sl3G2pDfxckidCk");
-      emailjsReady = true;
-      console.log("EmailJS تم تحميله بنجاح");
-    } else {
-      console.error("فشل تحميل EmailJS");
-      showError("خطأ في تحميل مكتبة البريد الإلكتروني");
-    }
-  });
+// ⚠️ مهم جداً: غيّر هذا البريد الإلكتروني إلى بريدك الحقيقي
+const YOUR_EMAIL = "exarserver@gmail.com";  // <-- البريد الخاص بك
 
-  // تخزين الطلبات في متغير لتجنب مشاكل localStorage
-  let applicationsData = [];
+// إعدادات EmailJS
+// Service ID: service_vaheead
+// Template ID: template_vfvvecb
+// Template Type: Contact Us
 
-  function showSection(id) {
-    document.querySelectorAll("section").forEach(sec => sec.classList.remove("active"));
-    document.getElementById(id).classList.add("active");
-  }
+// تهيئة EmailJS مع التحقق من التحميل
+let emailjsReady = false;
 
-  function showError(message) {
-    const errorDiv = document.getElementById('errorMessage');
+// تخزين الطلبات في متغير
+let applicationsData = [];
+
+// دوال عامة يجب أن تكون متاحة للـ HTML
+window.showSection = function(id) {
+  document.querySelectorAll("section").forEach(sec => sec.classList.remove("active"));
+  document.getElementById(id).classList.add("active");
+}
+
+window.showError = function(message) {
+  const errorDiv = document.getElementById('errorMessage');
+  if (errorDiv) {
     errorDiv.textContent = message;
     errorDiv.style.display = 'block';
     setTimeout(() => {
       errorDiv.style.display = 'none';
     }, 5000);
+  } else {
+    // إذا لم يكن العنصر موجوداً، استخدم alert
+    alert("خطأ: " + message);
   }
+}
 
-  function showSuccess(message) {
-    const successDiv = document.getElementById('successMessage');
+window.showSuccess = function(message) {
+  const successDiv = document.getElementById('successMessage');
+  if (successDiv) {
     successDiv.textContent = message;
     successDiv.style.display = 'block';
     setTimeout(() => {
       successDiv.style.display = 'none';
     }, 5000);
+  } else {
+    // إذا لم يكن العنصر موجوداً، استخدم alert
+    alert(message);
   }
+}
 
-  document.getElementById("applyForm").addEventListener("submit", function(e) {
-    e.preventDefault();
-    
-    // التحقق من جاهزية EmailJS
-    if (!emailjsReady) {
-      showError("مكتبة البريد الإلكتروني غير جاهزة. حاول مرة أخرى.");
-      return;
+// تهيئة EmailJS عند تحميل الصفحة
+window.addEventListener('DOMContentLoaded', function() {
+  if (typeof emailjs !== 'undefined') {
+    try {
+      emailjs.init("z8Sl3G2pDfxckidCk");
+      emailjsReady = true;
+      console.log("EmailJS تم تحميله بنجاح");
+    } catch (error) {
+      console.error("خطأ في تهيئة EmailJS:", error);
     }
-    
-    // إظهار مؤشر التحميل
-    document.getElementById('loader').style.display = 'block';
-    document.getElementById('submitBtn').disabled = true;
-    
-    const ign = document.getElementById("ign").value.trim();
-    const age = document.getElementById("age").value.trim();
-    const discord = document.getElementById("discord").value.trim();
-    const reason = document.getElementById("reason").value.trim();
-
-    // حفظ البيانات محلياً
-    const newApplication = { 
-      ign, 
-      age, 
-      discord, 
-      reason, 
-      date: new Date().toLocaleString('ar-SA') 
-    };
-    
-    applicationsData.push(newApplication);
-
-    // معاملات القالب - متوافقة مع قالب Contact Us
-    const templateParams = {
-      // الحقول الأساسية لقالب Contact Us
-      from_name: ign,     // اسم المرسل
-      to_email: YOUR_EMAIL, // البريد المستقبل - استخدام المتغير
-      
-      // الحقول المخصصة لطلب الانضمام
-      ign: ign,           // الاسم في اللعبة
-      age: age,           // العمر
-      discord: discord,   // حساب ديسكورد
-      reason: reason,     // سبب الانضمام
-      date: new Date().toLocaleString('ar-SA'),  // التاريخ
-      
-      // حقول إضافية مفيدة
-      subject: `طلب انضمام جديد من ${ign}`,  // عنوان الرسالة
-      message: `الاسم: ${ign}\nالعمر: ${age}\nديسكورد: ${discord}\nالسبب: ${reason}`,  // نص الرسالة الكامل
-      reply_to: discord   // للرد (اختياري)
-    };
-
-    console.log("إرسال البيانات:", templateParams);
-
-    // إرسال البريد الإلكتروني مع معالجة أفضل للأخطاء
-    emailjs.send("service_vaheead", "template_vfvvecb", templateParams)
-      .then(function(response) {
-        console.log("نجح الإرسال!", response);
-        showSuccess("تم إرسال طلبك بنجاح! سنتواصل معك قريباً.");
-        document.getElementById("applyForm").reset();
-      })
-      .catch(function(error) {
-        console.error("تفاصيل الخطأ الكاملة:", error);
-        
-        // معالجة مفصلة للأخطاء
-        let errorMessage = "حدث خطأ في الإرسال. ";
-        
-        if (error.status === 0) {
-          errorMessage += "تحقق من اتصالك بالإنترنت.";
-        } else if (error.status === 400) {
-          errorMessage += "معرف الخدمة أو القالب غير صحيح.";
-        } else if (error.status === 401) {
-          errorMessage += "مفتاح المستخدم غير صحيح.";
-        } else if (error.status === 412) {
-          errorMessage += "تحقق من أن جميع الحقول المطلوبة في القالب موجودة.";
-        } else if (error.status === 422) {
-          errorMessage += "خطأ في معاملات القالب.";
-        } else if (error.status === 429) {
-          errorMessage += "تم تجاوز حد الإرسال المسموح.";
-        } else {
-          errorMessage += error.text || "خطأ غير معروف.";
-        }
-        
-        showError(errorMessage);
-        
-        // حفظ البيانات محلياً في كل الأحوال
-        console.log("تم حفظ البيانات محلياً:", newApplication);
-      })
-      .finally(function() {
-        // إخفاء مؤشر التحميل
-        document.getElementById('loader').style.display = 'none';
-        document.getElementById('submitBtn').disabled = false;
-      });
-  });
-
-  function adminAccess() {
-    const pass = prompt("ادخل كلمة المرور");
-    if (pass === "exar3321") {
-      showSection("admin");
-      loadApplications();
-    } else {
-      alert("كلمة المرور خاطئة");
-    }
+  } else {
+    console.error("فشل تحميل مكتبة EmailJS");
   }
+  
+  // إضافة معالج النموذج
+  const form = document.getElementById("applyForm");
+  if (form) {
+    form.addEventListener("submit", handleFormSubmit);
+  }
+});
 
-  function loadApplications() {
-    const container = document.getElementById("applications");
-    container.innerHTML = "";
+// معالج إرسال النموذج
+function handleFormSubmit(e) {
+  e.preventDefault();
+  
+  // التحقق من جاهزية EmailJS
+  if (!emailjsReady) {
+    showError("مكتبة البريد الإلكتروني غير جاهزة. حاول مرة أخرى.");
+    return;
+  }
+  
+  // إظهار مؤشر التحميل
+  document.getElementById('loader').style.display = 'block';
+  document.getElementById('submitBtn').disabled = true;
+  
+  const ign = document.getElementById("ign").value.trim();
+  const age = document.getElementById("age").value.trim();
+  const discord = document.getElementById("discord").value.trim();
+  const reason = document.getElementById("reason").value.trim();
 
-    if (applicationsData.length === 0) {
-      container.innerHTML = "<p>لا يوجد متقدمين حالياً.</p>";
-      return;
-    }
+  // حفظ البيانات محلياً
+  const newApplication = { 
+    ign, 
+    age, 
+    discord, 
+    reason, 
+    date: new Date().toLocaleString('ar-SA') 
+  };
+  
+  applicationsData.push(newApplication);
 
-    applicationsData.forEach((app, index) => {
-      const card = document.createElement("div");
-      card.className = "application-card";
-      card.innerHTML = `
-        <strong>الاسم داخل اللعبة:</strong> ${app.ign}<br>
-        <strong>العمر:</strong> ${app.age}<br>
-        <strong>ديسكورد:</strong> ${app.discord}<br>
-        <strong>السبب:</strong> ${app.reason}<br>
-        <strong>التاريخ:</strong> ${app.date || 'غير محدد'}<br>
-        <button onclick="removeApplication(${index})" style="background-color: #dc3545; margin-top: 10px;">حذف</button>
-      `;
-      container.appendChild(card);
+  // معاملات القالب - متوافقة مع قالب Contact Us
+  const templateParams = {
+    // الحقول الأساسية لقالب Contact Us
+    from_name: ign,     // اسم المرسل
+    to_email: YOUR_EMAIL, // البريد المستقبل
+    
+    // الحقول المخصصة
+    ign: ign,           
+    age: age,           
+    discord: discord,   
+    reason: reason,     
+    date: new Date().toLocaleString('ar-SA'),
+    
+    // حقول إضافية
+    subject: `طلب انضمام جديد من ${ign}`,
+    message: `الاسم: ${ign}\nالعمر: ${age}\nديسكورد: ${discord}\nالسبب: ${reason}`,
+    reply_to: discord
+  };
+
+  console.log("إرسال البيانات:", templateParams);
+
+  // إرسال البريد الإلكتروني
+  emailjs.send("service_vaheead", "template_vfvvecb", templateParams)
+    .then(function(response) {
+      console.log("نجح الإرسال!", response);
+      showSuccess("تم إرسال طلبك بنجاح! سنتواصل معك قريباً.");
+      document.getElementById("applyForm").reset();
+    })
+    .catch(function(error) {
+      console.error("تفاصيل الخطأ:", error);
+      
+      // معالجة الأخطاء
+      let errorMessage = "حدث خطأ في الإرسال. ";
+      
+      if (error.status === 0) {
+        errorMessage += "تحقق من اتصالك بالإنترنت.";
+      } else if (error.status === 400) {
+        errorMessage += "معرف الخدمة أو القالب غير صحيح.";
+      } else if (error.status === 401) {
+        errorMessage += "مفتاح المستخدم غير صحيح.";
+      } else if (error.status === 412) {
+        errorMessage += "تحقق من أن جميع الحقول المطلوبة في القالب موجودة.";
+      } else if (error.status === 422) {
+        errorMessage += "خطأ في معاملات القالب.";
+      } else if (error.status === 429) {
+        errorMessage += "تم تجاوز حد الإرسال المسموح.";
+      } else {
+        errorMessage += error.text || "خطأ غير معروف.";
+      }
+      
+      showError(errorMessage);
+      console.log("تم حفظ البيانات محلياً:", newApplication);
+    })
+    .finally(function() {
+      // إخفاء مؤشر التحميل
+      document.getElementById('loader').style.display = 'none';
+      document.getElementById('submitBtn').disabled = false;
     });
+}
+
+// دالة الدخول للوحة الإدارة
+window.adminAccess = function() {
+  const pass = prompt("ادخل كلمة المرور");
+  if (pass === "exar3321") {
+    showSection("admin");
+    loadApplications();
+  } else {
+    alert("كلمة المرور خاطئة");
+  }
+}
+
+// دالة تحميل الطلبات
+window.loadApplications = function() {
+  const container = document.getElementById("applications");
+  container.innerHTML = "";
+
+  if (applicationsData.length === 0) {
+    container.innerHTML = "<p>لا يوجد متقدمين حالياً.</p>";
+    return;
   }
 
-  function removeApplication(index) {
-    if (confirm("هل أنت متأكد من حذف هذا الطلب؟")) {
-      applicationsData.splice(index, 1);
-      loadApplications();
-    }
+  applicationsData.forEach((app, index) => {
+    const card = document.createElement("div");
+    card.className = "application-card";
+    card.innerHTML = `
+      <strong>الاسم داخل اللعبة:</strong> ${app.ign}<br>
+      <strong>العمر:</strong> ${app.age}<br>
+      <strong>ديسكورد:</strong> ${app.discord}<br>
+      <strong>السبب:</strong> ${app.reason}<br>
+      <strong>التاريخ:</strong> ${app.date || 'غير محدد'}<br>
+      <button onclick="removeApplication(${index})" style="background-color: #dc3545; margin-top: 10px;">حذف</button>
+    `;
+    container.appendChild(card);
+  });
+}
+
+// دالة حذف طلب
+window.removeApplication = function(index) {
+  if (confirm("هل أنت متأكد من حذف هذا الطلب؟")) {
+    applicationsData.splice(index, 1);
+    loadApplications();
+  }
+}
+
+// دالة مسح جميع الطلبات
+window.clearAllApplications = function() {
+  if (confirm("هل أنت متأكد من حذف جميع الطلبات؟")) {
+    applicationsData = [];
+    loadApplications();
+  }
+}
+
+// دالة اختبار الاتصال بـ EmailJS
+window.testEmailJS = function() {
+  if (!emailjsReady) {
+    showError("EmailJS غير جاهز بعد. انتظر قليلاً وحاول مرة أخرى.");
+    return;
   }
 
-  function clearAllApplications() {
-    if (confirm("هل أنت متأكد من حذف جميع الطلبات؟")) {
-      applicationsData = [];
-      loadApplications();
-    }
-  }
+  showSuccess("جاري اختبار الاتصال...");
+  
+  const testParams = {
+    from_name: "اختبار",
+    to_email: YOUR_EMAIL,
+    ign: "اختبار",
+    age: "18",
+    discord: "test#1234",
+    reason: "هذه رسالة اختبار للتأكد من عمل النظام",
+    date: new Date().toLocaleString('ar-SA'),
+    subject: "رسالة اختبار من موقع Exar",
+    message: "هذه رسالة اختبار للتأكد من أن EmailJS يعمل بشكل صحيح"
+  };
 
-  // دالة اختبار الاتصال بـ EmailJS
-  function testEmailJS() {
-    if (!emailjsReady) {
-      showError("EmailJS غير جاهز بعد. انتظر قليلاً وحاول مرة أخرى.");
-      return;
-    }
-
-    showSuccess("جاري اختبار الاتصال...");
-    
-    const testParams = {
-      from_name: "اختبار",
-      to_email: YOUR_EMAIL, // استخدام المتغير
-      ign: "اختبار",
-      age: "18",
-      discord: "test#1234",
-      reason: "هذه رسالة اختبار للتأكد من عمل النظام",
-      date: new Date().toLocaleString('ar-SA'),
-      subject: "رسالة اختبار من موقع Exar",
-      message: "هذه رسالة اختبار للتأكد من أن EmailJS يعمل بشكل صحيح"
-    };
-
-    emailjs.send("service_vaheead", "template_vfvvecb", testParams)
-      .then(function(response) {
-        showSuccess("نجح الاختبار! EmailJS يعمل بشكل صحيح.");
-        console.log("نجح اختبار EmailJS:", response);
-      })
-      .catch(function(error) {
-        console.error("فشل اختبار EmailJS:", error);
-        showError("فشل الاختبار. راجع Console للتفاصيل.");
-      });
-  }
+  emailjs.send("service_vaheead", "template_vfvvecb", testParams)
+    .then(function(response) {
+      showSuccess("نجح الاختبار! EmailJS يعمل بشكل صحيح.");
+      console.log("نجح اختبار EmailJS:", response);
+    })
+    .catch(function(error) {
+      console.error("فشل اختبار EmailJS:", error);
+      showError("فشل الاختبار. راجع Console للتفاصيل.");
+    });
+}
 </script>
 </body>
 </html>
