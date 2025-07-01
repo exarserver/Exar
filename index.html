@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>سيرفر ماين كرافت</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      margin: 0;
+      background-color: #f2f2f2;
+      color: #333;
+    }
+
+    header {
+      background-color: #3b82f6;
+      color: white;
+      padding: 1rem;
+      text-align: center;
+    }
+
+    nav {
+      background-color: #2563eb;
+      display: flex;
+      justify-content: center;
+      gap: 1rem;
+      padding: 1rem;
+    }
+
+    nav a {
+      color: white;
+      text-decoration: none;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    nav a:hover {
+      text-decoration: underline;
+    }
+
+    section {
+      display: none;
+      padding: 2rem;
+    }
+
+    section.active {
+      display: block;
+    }
+
+    input, textarea, button {
+      display: block;
+      width: 100%;
+      margin: 0.5rem 0;
+      padding: 0.5rem;
+      border-radius: 5px;
+      border: 1px solid #ccc;
+    }
+
+    button {
+      background-color: #3b82f6;
+      color: white;
+      border: none;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background-color: #2563eb;
+    }
+
+    .application-card {
+      background-color: #fff;
+      padding: 1rem;
+      margin: 0.5rem 0;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+    }
+
+    footer {
+      background-color: #eee;
+      text-align: center;
+      padding: 1rem;
+      margin-top: 2rem;
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>سيرفر ماين كرافت - التقديم</h1>
+</header>
+
+<nav>
+  <a onclick="showSection('home')">الرئيسية</a>
+  <a onclick="showSection('apply')">التقديم</a>
+  <a onclick="adminAccess()">لوحة الإدارة</a>
+</nav>
+
+<main>
+  <!-- الرئيسية -->
+  <section id="home" class="active">
+    <h2>عن السيرفر</h2>
+    <p>مرحباً بك في أفضل سيرفر ماين كرافت! يمكنك التقديم للانضمام إلينا عبر الصفحة التالية.</p>
+    <p>قواعد السيرفر، الإصدارات المدعومة، أوقات النشاط، وغيرها من التفاصيل يمكن تعديلها هنا بسهولة.</p>
+  </section>
+
+  <!-- التقديم -->
+  <section id="apply">
+    <h2>نموذج التقديم</h2>
+    <form id="applyForm">
+      <label>الاسم داخل اللعبة:</label>
+      <input type="text" id="ign" required />
+
+      <label>العمر:</label>
+      <input type="number" id="age" required />
+
+      <label>لماذا تريد الانضمام؟</label>
+      <textarea id="reason" required></textarea>
+
+      <button type="submit">إرسال</button>
+    </form>
+  </section>
+
+  <!-- الإدارة (تظهر فقط عند إدخال كلمة مرور) -->
+  <section id="admin">
+    <h2>لوحة الإدارة - المتقدمون</h2>
+    <div id="applications"></div>
+  </section>
+</main>
+
+<footer>
+  &copy; 2025 سيرفر ماين كرافت - جميع الحقوق محفوظة
+</footer>
+
+<script>
+  // إظهار الصفحات
+  function showSection(id) {
+    document.querySelectorAll("section").forEach(sec => sec.classList.remove("active"));
+    document.getElementById(id).classList.add("active");
+  }
+
+  // حفظ التقديمات
+  document.getElementById("applyForm").addEventListener("submit", function(e) {
+    e.preventDefault();
+    const ign = document.getElementById("ign").value.trim();
+    const age = document.getElementById("age").value.trim();
+    const reason = document.getElementById("reason").value.trim();
+
+    const applications = JSON.parse(localStorage.getItem("applications") || "[]");
+    applications.push({ ign, age, reason });
+    localStorage.setItem("applications", JSON.stringify(applications));
+
+    alert("تم إرسال طلبك بنجاح!");
+    this.reset();
+  });
+
+  // إظهار لوحة الإدارة
+  function adminAccess() {
+    const pass = prompt("ادخل كلمة المرور");
+    if (pass === "admin123") {
+      showSection("admin");
+      loadApplications();
+    } else {
+      alert("كلمة المرور خاطئة");
+    }
+  }
+
+  // تحميل المتقدمين
+  function loadApplications() {
+    const container = document.getElementById("applications");
+    container.innerHTML = "";
+    const applications = JSON.parse(localStorage.getItem("applications") || "[]");
+
+    if (applications.length === 0) {
+      container.innerHTML = "<p>لا يوجد متقدمين حالياً.</p>";
+      return;
+    }
+
+    applications.forEach((app, index) => {
+      const card = document.createElement("div");
+      card.className = "application-card";
+      card.innerHTML = `
+        <strong>الاسم داخل اللعبة:</strong> ${app.ign}<br>
+        <strong>العمر:</strong> ${app.age}<br>
+        <strong>السبب:</strong> ${app.reason}
+      `;
+      container.appendChild(card);
+    });
+  }
+</script>
+
+</body>
+</html>
