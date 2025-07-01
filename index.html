@@ -72,15 +72,47 @@
       padding: 1rem;
       margin-top: 2rem;
     }
+    code {
+      background-color: #f3f4f6;
+      padding: 2px 6px;
+      border-radius: 3px;
+      font-family: monospace;
+      font-size: 0.9em;
+    }
+    .error-message {
+      background-color: #fee;
+      color: #c00;
+      padding: 10px;
+      border-radius: 5px;
+      margin: 10px 0;
+      display: none;
+    }
+    .success-message {
+      background-color: #efe;
+      color: #080;
+      padding: 10px;
+      border-radius: 5px;
+      margin: 10px 0;
+      display: none;
+    }
+    .loader {
+      border: 4px solid #f3f3f3;
+      border-radius: 50%;
+      border-top: 4px solid #3b82f6;
+      width: 40px;
+      height: 40px;
+      animation: spin 1s linear infinite;
+      margin: 20px auto;
+      display: none;
+    }
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
   </style>
 
-  <!-- EmailJS -->
-  <script src="https://cdn.emailjs.com/dist/email.min.js"></script>
-  <script>
-    window.addEventListener("DOMContentLoaded", function() {
-      emailjs.init("z8Sl3G2pDfxckidCk");
-    });
-  </script>
+  <!-- EmailJS SDK v3 -->
+  <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
 </head>
 <body>
 
@@ -101,21 +133,37 @@
   <section id="home" class="active">
     <h2>عن السيرفر</h2>
     <p>مرحباً بك في سيرفر اكسار يمكنك التقديم للانضمام إلينا عبر صفحة التقديم</p>
+    
+    <div style="background-color: #fef3c7; padding: 1rem; border-radius: 8px; margin-top: 1rem; border: 1px solid #f59e0b;">
+      <h3>⚠️ ملاحظة مهمة للمسؤول:</h3>
+      <ol style="text-align: right;">
+        <li>غيّر البريد الإلكتروني في بداية كود JavaScript إلى بريدك الحقيقي</li>
+        <li>تأكد من أن Service ID هو: <code>service_vaheead</code></li>
+        <li>تأكد من أن Template ID هو: <code>template_vfvvecb</code></li>
+        <li>في قالب EmailJS، اختر نوع "Contact Us"</li>
+        <li>ضع بريدك في حقل "To Email" في إعدادات القالب</li>
+        <li>تأكد من تفعيل الخدمة في <a href="https://dashboard.emailjs.com" target="_blank">dashboard.emailjs.com</a></li>
+      </ol>
+    </div>
   </section>
 
   <!-- التقديم -->
   <section id="apply">
     <h2>نموذج التقديم</h2>
+    <div class="error-message" id="errorMessage"></div>
+    <div class="success-message" id="successMessage"></div>
+    <button onclick="testEmailJS()" style="background-color: #28a745; margin-bottom: 1rem;">اختبار الاتصال بـ EmailJS</button>
     <form id="applyForm">
       <label>الاسم داخل اللعبة:</label>
       <input type="text" id="ign" required />
       <label>حسابك في ديسكورد:</label>
       <input type="text" id="discord" placeholder="مثال: name#1234" required />
       <label>العمر:</label>
-      <input type="number" id="age" required />
+      <input type="number" id="age" min="10" max="100" required />
       <label>لماذا تريد الانضمام؟</label>
-      <textarea id="reason" required></textarea>
-      <button type="submit">إرسال</button>
+      <textarea id="reason" rows="4" required></textarea>
+      <button type="submit" id="submitBtn">إرسال</button>
+      <div class="loader" id="loader"></div>
     </form>
   </section>
 
@@ -133,6 +181,7 @@
   <!-- لوحة الإدارة -->
   <section id="admin">
     <h2>لوحة الإدارة - المتقدمون</h2>
+    <button onclick="clearAllApplications()" style="background-color: #dc3545; margin-bottom: 1rem;">مسح جميع الطلبات</button>
     <div id="applications"></div>
   </section>
 </main>
@@ -142,33 +191,143 @@
 </footer>
 
 <script>
+  // ⚠️ مهم جداً: غيّر هذا البريد الإلكتروني إلى بريدك الحقيقي
+  const YOUR_EMAIL = "your-email@gmail.com";  // <-- غيّر هذا!
+  
+  // إعدادات EmailJS
+  // Service ID: service_vaheead
+  // Template ID: template_vfvvecb
+  // Template Type: Contact Us
+  
+  // تهيئة EmailJS مع التحقق من التحميل
+  let emailjsReady = false;
+  
+  window.addEventListener('load', function() {
+    if (typeof emailjs !== 'undefined') {
+      emailjs.init("z8Sl3G2pDfxckidCk");
+      emailjsReady = true;
+      console.log("EmailJS تم تحميله بنجاح");
+    } else {
+      console.error("فشل تحميل EmailJS");
+      showError("خطأ في تحميل مكتبة البريد الإلكتروني");
+    }
+  });
+
+  // تخزين الطلبات في متغير لتجنب مشاكل localStorage
+  let applicationsData = [];
+
   function showSection(id) {
     document.querySelectorAll("section").forEach(sec => sec.classList.remove("active"));
     document.getElementById(id).classList.add("active");
   }
 
+  function showError(message) {
+    const errorDiv = document.getElementById('errorMessage');
+    errorDiv.textContent = message;
+    errorDiv.style.display = 'block';
+    setTimeout(() => {
+      errorDiv.style.display = 'none';
+    }, 5000);
+  }
+
+  function showSuccess(message) {
+    const successDiv = document.getElementById('successMessage');
+    successDiv.textContent = message;
+    successDiv.style.display = 'block';
+    setTimeout(() => {
+      successDiv.style.display = 'none';
+    }, 5000);
+  }
+
   document.getElementById("applyForm").addEventListener("submit", function(e) {
     e.preventDefault();
+    
+    // التحقق من جاهزية EmailJS
+    if (!emailjsReady) {
+      showError("مكتبة البريد الإلكتروني غير جاهزة. حاول مرة أخرى.");
+      return;
+    }
+    
+    // إظهار مؤشر التحميل
+    document.getElementById('loader').style.display = 'block';
+    document.getElementById('submitBtn').disabled = true;
+    
     const ign = document.getElementById("ign").value.trim();
     const age = document.getElementById("age").value.trim();
     const discord = document.getElementById("discord").value.trim();
     const reason = document.getElementById("reason").value.trim();
 
-    const applications = JSON.parse(localStorage.getItem("applications") || "[]");
-    applications.push({ ign, age, discord, reason });
-    localStorage.setItem("applications", JSON.stringify(applications));
+    // حفظ البيانات محلياً
+    const newApplication = { 
+      ign, 
+      age, 
+      discord, 
+      reason, 
+      date: new Date().toLocaleString('ar-SA') 
+    };
+    
+    applicationsData.push(newApplication);
 
-    const templateParams = { ign, age, discord, reason };
-    emailjs.send("service_vaheead", "template_llqj249", templateParams)
+    // معاملات القالب - متوافقة مع قالب Contact Us
+    const templateParams = {
+      // الحقول الأساسية لقالب Contact Us
+      from_name: ign,     // اسم المرسل
+      to_email: YOUR_EMAIL, // البريد المستقبل
+      
+      // الحقول المخصصة لطلب الانضمام
+      ign: ign,           // الاسم في اللعبة
+      age: age,           // العمر
+      discord: discord,   // حساب ديسكورد
+      reason: reason,     // سبب الانضمام
+      date: new Date().toLocaleString('ar-SA'),  // التاريخ
+      
+      // حقول إضافية مفيدة
+      subject: `طلب انضمام جديد من ${ign}`,  // عنوان الرسالة
+      message: `الاسم: ${ign}\nالعمر: ${age}\nديسكورد: ${discord}\nالسبب: ${reason}`,  // نص الرسالة الكامل
+      reply_to: discord   // للرد (اختياري)
+    };
+
+    console.log("إرسال البيانات:", templateParams);
+
+    // إرسال البريد الإلكتروني مع معالجة أفضل للأخطاء
+    emailjs.send("service_vaheead", "template_vfvvecb", templateParams)
       .then(function(response) {
-        alert("تم إرسال طلبك بنجاح!");
-        console.log("تم إرسال الإيميل بنجاح!", response.status, response.text);
-      }, function(error) {
-        alert("حدث خطأ أثناء إرسال البريد، تأكد من إعدادات EmailJS.");
-        console.error("فشل في إرسال الإيميل:", error);
+        console.log("نجح الإرسال!", response);
+        showSuccess("تم إرسال طلبك بنجاح! سنتواصل معك قريباً.");
+        document.getElementById("applyForm").reset();
+      })
+      .catch(function(error) {
+        console.error("تفاصيل الخطأ الكاملة:", error);
+        
+        // معالجة مفصلة للأخطاء
+        let errorMessage = "حدث خطأ في الإرسال. ";
+        
+        if (error.status === 0) {
+          errorMessage += "تحقق من اتصالك بالإنترنت.";
+        } else if (error.status === 400) {
+          errorMessage += "معرف الخدمة أو القالب غير صحيح.";
+        } else if (error.status === 401) {
+          errorMessage += "مفتاح المستخدم غير صحيح.";
+        } else if (error.status === 412) {
+          errorMessage += "تحقق من أن جميع الحقول المطلوبة في القالب موجودة.";
+        } else if (error.status === 422) {
+          errorMessage += "خطأ في معاملات القالب.";
+        } else if (error.status === 429) {
+          errorMessage += "تم تجاوز حد الإرسال المسموح.";
+        } else {
+          errorMessage += error.text || "خطأ غير معروف.";
+        }
+        
+        showError(errorMessage);
+        
+        // حفظ البيانات محلياً في كل الأحوال
+        console.log("تم حفظ البيانات محلياً:", newApplication);
+      })
+      .finally(function() {
+        // إخفاء مؤشر التحميل
+        document.getElementById('loader').style.display = 'none';
+        document.getElementById('submitBtn').disabled = false;
       });
-
-    this.reset();
   });
 
   function adminAccess() {
@@ -184,24 +343,71 @@
   function loadApplications() {
     const container = document.getElementById("applications");
     container.innerHTML = "";
-    const applications = JSON.parse(localStorage.getItem("applications") || "[]");
 
-    if (applications.length === 0) {
+    if (applicationsData.length === 0) {
       container.innerHTML = "<p>لا يوجد متقدمين حالياً.</p>";
       return;
     }
 
-    applications.forEach((app) => {
+    applicationsData.forEach((app, index) => {
       const card = document.createElement("div");
       card.className = "application-card";
       card.innerHTML = `
         <strong>الاسم داخل اللعبة:</strong> ${app.ign}<br>
         <strong>العمر:</strong> ${app.age}<br>
         <strong>ديسكورد:</strong> ${app.discord}<br>
-        <strong>السبب:</strong> ${app.reason}
+        <strong>السبب:</strong> ${app.reason}<br>
+        <strong>التاريخ:</strong> ${app.date || 'غير محدد'}<br>
+        <button onclick="removeApplication(${index})" style="background-color: #dc3545; margin-top: 10px;">حذف</button>
       `;
       container.appendChild(card);
     });
+  }
+
+  function removeApplication(index) {
+    if (confirm("هل أنت متأكد من حذف هذا الطلب؟")) {
+      applicationsData.splice(index, 1);
+      loadApplications();
+    }
+  }
+
+  function clearAllApplications() {
+    if (confirm("هل أنت متأكد من حذف جميع الطلبات؟")) {
+      applicationsData = [];
+      loadApplications();
+    }
+  }
+
+  // دالة اختبار الاتصال بـ EmailJS
+  function testEmailJS() {
+    if (!emailjsReady) {
+      showError("EmailJS غير جاهز بعد. انتظر قليلاً وحاول مرة أخرى.");
+      return;
+    }
+
+    showSuccess("جاري اختبار الاتصال...");
+    
+    const testParams = {
+      from_name: "اختبار",
+      to_email: YOUR_EMAIL,
+      ign: "اختبار",
+      age: "18",
+      discord: "test#1234",
+      reason: "هذه رسالة اختبار للتأكد من عمل النظام",
+      date: new Date().toLocaleString('ar-SA'),
+      subject: "رسالة اختبار من موقع Exar",
+      message: "هذه رسالة اختبار للتأكد من أن EmailJS يعمل بشكل صحيح"
+    };
+
+    emailjs.send("service_vaheead", "template_vfvvecb", testParams)
+      .then(function(response) {
+        showSuccess("نجح الاختبار! EmailJS يعمل بشكل صحيح.");
+        console.log("نجح اختبار EmailJS:", response);
+      })
+      .catch(function(error) {
+        console.error("فشل اختبار EmailJS:", error);
+        showError("فشل الاختبار. راجع Console للتفاصيل.");
+      });
   }
 </script>
 </body>
