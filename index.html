@@ -192,7 +192,7 @@
 
 <script>
   // ⚠️ مهم جداً: غيّر هذا البريد الإلكتروني إلى بريدك الحقيقي
-  const YOUR_EMAIL = "exarserver@gmail.com";  // <-- غيّر هذا!
+  const YOUR_EMAIL = "exarserver@gmail.com";  // <-- البريد الخاص بك
   
   // إعدادات EmailJS
   // Service ID: service_vaheead
@@ -272,7 +272,7 @@
     const templateParams = {
       // الحقول الأساسية لقالب Contact Us
       from_name: ign,     // اسم المرسل
-      to_email: exarserver@gmail.com, // البريد المستقبل
+      to_email: YOUR_EMAIL, // البريد المستقبل - استخدام المتغير
       
       // الحقول المخصصة لطلب الانضمام
       ign: ign,           // الاسم في اللعبة
@@ -389,7 +389,7 @@
     
     const testParams = {
       from_name: "اختبار",
-      to_email: exarserver@gmail.com,
+      to_email: YOUR_EMAIL, // استخدام المتغير
       ign: "اختبار",
       age: "18",
       discord: "test#1234",
