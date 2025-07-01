@@ -12,6 +12,16 @@
       margin: 0;
       background-color: #f2f2f2;
       color: #333;
+    pre {
+      background: #f8f9fa; 
+      padding: 10px; 
+      border-radius: 5px; 
+      text-align: left; 
+      direction: ltr;
+      border: 1px solid #dee2e6;
+      overflow-x: auto;
+      font-family: 'Courier New', monospace;
+      font-size: 14px;
     }
     header {
       background-color: #3b82f6;
@@ -144,6 +154,24 @@
         <li>ضع بريدك في حقل "To Email" في إعدادات القالب</li>
         <li>تأكد من تفعيل الخدمة في <a href="https://dashboard.emailjs.com" target="_blank">dashboard.emailjs.com</a></li>
       </ol>
+      
+      <h4>نموذج قالب EmailJS:</h4>
+      <pre style="background: #f8f9fa; padding: 10px; border-radius: 5px; text-align: left; direction: ltr;">
+Subject: New Application - {{from_name}}
+
+From: {{from_name}}
+Email: {{from_email}}
+
+Application Details:
+Name: {{ign}}
+Age: {{age}}
+Discord: {{discord}}
+Reason: {{reason}}
+
+Message:
+{{message}}
+
+Date: {{date}}</pre>
     </div>
   </section>
 
@@ -153,6 +181,7 @@
     <div class="error-message" id="errorMessage"></div>
     <div class="success-message" id="successMessage"></div>
     <button onclick="testEmailJS()" style="background-color: #28a745; margin-bottom: 1rem;">اختبار الاتصال بـ EmailJS</button>
+    <button onclick="showDebugInfo()" style="background-color: #17a2b8; margin-bottom: 1rem;">عرض معلومات التشخيص</button>
     <form id="applyForm">
       <label>الاسم داخل اللعبة:</label>
       <input type="text" id="ign" required />
@@ -290,26 +319,36 @@ function handleFormSubmit(e) {
   
   applicationsData.push(newApplication);
 
-  // معاملات القالب - متوافقة مع قالب Contact Us
+  // معاملات القالب - تشمل جميع الحقول المحتملة
   const templateParams = {
-    // الحقول الأساسية لقالب Contact Us
-    from_name: ign,     // اسم المرسل
-    to_email: YOUR_EMAIL, // البريد المستقبل
+    // حقول EmailJS الافتراضية
+    from_name: ign,
+    from_email: discord, // بعض القوالب تحتاج from_email
+    to_name: "Admin", // بعض القوالب تحتاج to_name
+    to_email: YOUR_EMAIL,
+    reply_to: discord,
     
-    // الحقول المخصصة
-    ign: ign,           
-    age: age,           
-    discord: discord,   
-    reason: reason,     
+    // حقول مخصصة للبيانات
+    user_name: ign, // حقل بديل للاسم
+    name: ign, // حقل بديل آخر
+    ign: ign,
+    age: age,
+    discord: discord,
+    reason: reason,
     date: new Date().toLocaleString('ar-SA'),
     
-    // حقول إضافية
+    // حقول الرسالة
     subject: `طلب انضمام جديد من ${ign}`,
-    message: `الاسم: ${ign}\nالعمر: ${age}\nديسكورد: ${discord}\nالسبب: ${reason}`,
-    reply_to: discord
+    message: `طلب انضمام جديد لسيرفر Exar\n\nالاسم داخل اللعبة: ${ign}\nالعمر: ${age}\nحساب ديسكورد: ${discord}\nسبب الانضمام: ${reason}\n\nالتاريخ: ${new Date().toLocaleString('ar-SA')}`,
+    
+    // حقول إضافية قد تكون مطلوبة
+    email: discord, // بعض القوالب تحتاج حقل email
+    phone: "غير متوفر", // إذا كان القالب يحتاج رقم هاتف
   };
 
   console.log("إرسال البيانات:", templateParams);
+  console.log("عدد الحقول المرسلة:", Object.keys(templateParams).length);
+  console.log("الحقول المرسلة:", Object.keys(templateParams).join(", "));
 
   // إرسال البريد الإلكتروني
   emailjs.send("service_vaheead", "template_vfvvecb", templateParams)
@@ -327,15 +366,19 @@ function handleFormSubmit(e) {
       if (error.status === 0) {
         errorMessage += "تحقق من اتصالك بالإنترنت.";
       } else if (error.status === 400) {
-        errorMessage += "معرف الخدمة أو القالب غير صحيح.";
+        errorMessage += "معرف الخدمة أو القالب غير صحيح. تحقق من Service ID و Template ID.";
       } else if (error.status === 401) {
-        errorMessage += "مفتاح المستخدم غير صحيح.";
+        errorMessage += "مفتاح المستخدم غير صحيح. تحقق من User ID.";
       } else if (error.status === 412) {
-        errorMessage += "تحقق من أن جميع الحقول المطلوبة في القالب موجودة.";
+        errorMessage += "تحقق من أن جميع الحقول المطلوبة في القالب موجودة. ";
+        errorMessage += "اضغط على 'عرض معلومات التشخيص' لرؤية الحقول المرسلة.";
+        console.error("خطأ 412: الحقول المطلوبة غير موجودة");
+        console.error("تحقق من قالب EmailJS وتأكد من استخدام المتغيرات الصحيحة");
+        console.error("نصيحة: جرب استخدام {{message}} فقط في القالب كحل مؤقت");
       } else if (error.status === 422) {
-        errorMessage += "خطأ في معاملات القالب.";
+        errorMessage += "خطأ في معاملات القالب. تحقق من أسماء المتغيرات في القالب.";
       } else if (error.status === 429) {
-        errorMessage += "تم تجاوز حد الإرسال المسموح.";
+        errorMessage += "تم تجاوز حد الإرسال المسموح (200 رسالة شهرياً للحساب المجاني).";
       } else {
         errorMessage += error.text || "خطأ غير معروف.";
       }
@@ -402,6 +445,45 @@ window.clearAllApplications = function() {
   }
 }
 
+// دالة عرض معلومات التشخيص
+window.showDebugInfo = function() {
+  const debugInfo = `
+معلومات التشخيص:
+==================
+البريد المستخدم: ${YOUR_EMAIL}
+Service ID: service_vaheead
+Template ID: template_vfvvecb
+User ID: z8Sl3G2pDfxckidCk
+EmailJS جاهز: ${emailjsReady ? 'نعم' : 'لا'}
+
+الحقول المرسلة في القالب:
+- from_name (اسم المرسل)
+- from_email (بريد المرسل)
+- to_name (اسم المستقبل)
+- to_email (بريد المستقبل)
+- reply_to (الرد على)
+- user_name (اسم المستخدم)
+- name (الاسم)
+- ign (الاسم في اللعبة)
+- age (العمر)
+- discord (ديسكورد)
+- reason (السبب)
+- date (التاريخ)
+- subject (عنوان الرسالة)
+- message (الرسالة)
+- email (البريد)
+- phone (الهاتف)
+
+نصائح:
+1. تأكد من أن القالب في EmailJS يستخدم المتغيرات بالشكل {{variable_name}}
+2. تحقق من إعدادات القالب وأن To Email محدد بشكل صحيح
+3. جرب نسخ القالب الافتراضي "Contact Us" من EmailJS
+  `;
+  
+  console.log(debugInfo);
+  alert(debugInfo);
+}
+
 // دالة اختبار الاتصال بـ EmailJS
 window.testEmailJS = function() {
   if (!emailjsReady) {
@@ -412,15 +494,29 @@ window.testEmailJS = function() {
   showSuccess("جاري اختبار الاتصال...");
   
   const testParams = {
+    // حقول EmailJS الافتراضية
     from_name: "اختبار",
+    from_email: "test@test.com",
+    to_name: "Admin",
     to_email: YOUR_EMAIL,
+    reply_to: "test@test.com",
+    
+    // حقول مخصصة
+    user_name: "اختبار",
+    name: "اختبار",
     ign: "اختبار",
     age: "18",
     discord: "test#1234",
     reason: "هذه رسالة اختبار للتأكد من عمل النظام",
     date: new Date().toLocaleString('ar-SA'),
+    
+    // حقول الرسالة
     subject: "رسالة اختبار من موقع Exar",
-    message: "هذه رسالة اختبار للتأكد من أن EmailJS يعمل بشكل صحيح"
+    message: "هذه رسالة اختبار للتأكد من أن EmailJS يعمل بشكل صحيح",
+    
+    // حقول إضافية
+    email: "test@test.com",
+    phone: "غير متوفر"
   };
 
   emailjs.send("service_vaheead", "template_vfvvecb", testParams)
@@ -430,7 +526,11 @@ window.testEmailJS = function() {
     })
     .catch(function(error) {
       console.error("فشل اختبار EmailJS:", error);
-      showError("فشل الاختبار. راجع Console للتفاصيل.");
+      if (error.status === 412) {
+        showError("خطأ 412: الحقول المطلوبة في القالب غير موجودة. تحقق من إعدادات القالب في EmailJS.");
+      } else {
+        showError("فشل الاختبار. راجع Console للتفاصيل.");
+      }
     });
 }
 </script>
