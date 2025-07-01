@@ -9,7 +9,7 @@
   <script src="https://cdn.emailjs.com/dist/email.min.js"></script>
   <script>
     (function() {
-      emailjs.init("z8Sl3G2pDfxckidCk"); // استبدلها بمفتاحك الفعلي
+      emailjs.init("z8Sl3G2pDfxckidCk"); 
     })();
   </script>
 </body>
@@ -162,9 +162,8 @@ const applications = JSON.parse(localStorage.getItem("applications") || "[]");
 applications.push({ ign, age, discord, reason });
 
     localStorage.setItem("applications", JSON.stringify(applications));
-
-    alert("تم إرسال طلبك بنجاح!");
-    const templateParams = {
+// إرسال بالبريد
+  const templateParams = {
   ign: ign,
   age: age,
   discord: discord,
@@ -173,13 +172,20 @@ applications.push({ ign, age, discord, reason });
 
 emailjs.send("service_vaheead", "template_llqj249", templateParams)
   .then(function(response) {
-    console.log("✅ تم إرسال البريد بنجاح!", response.status, response.text);
+    console.log("تم إرسال الإيميل بنجاح!", response.status, response.text);
   }, function(error) {
-    console.error("❌ فشل إرسال البريد:", error);
+    console.error("فشل في إرسال الإيميل:", error);
   });
 
-    this.reset();
-  });
+   
+    alert("تم إرسال طلبك بنجاح!");
+    const templateParams = {
+  ign: ign,
+  age: age,
+  discord: discord,
+  reason: reason
+};
+
 
   // إظهار لوحة الإدارة
   function adminAccess() {
