@@ -110,8 +110,6 @@
     <form id="applyForm">
       <label>الاسم داخل اللعبة:</label>
       <input type="text" id="ign" required />
-      <label>اسم حسابك في الديسكورد:</label>
-      <input type="text" id="ign" required />
       <label>العمر:</label>
       <input type="number" id="age" required />
 
@@ -143,7 +141,6 @@
   // حفظ التقديمات
   document.getElementById("applyForm").addEventListener("submit", function(e) {
     e.preventDefault();
-    const ign = document.getElementById("ign").value.trim();
     const ign = document.getElementById("ign").value.trim();
     const age = document.getElementById("age").value.trim();
     const reason = document.getElementById("reason").value.trim();
