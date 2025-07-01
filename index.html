@@ -5,6 +5,16 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>SERVER EXAR</title>
   <style>
+     <!-- باقي سكربتات الموقع -->
+  <script src="https://cdn.emailjs.com/dist/email.min.js"></script>
+  <script>
+    (function() {
+      emailjs.init("z8Sl3G2pDfxckidCk"); // استبدلها بمفتاحك الفعلي
+    })();
+  </script>
+</body>
+</html>
+
     body {
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
       margin: 0;
@@ -154,6 +164,20 @@ applications.push({ ign, age, discord, reason });
     localStorage.setItem("applications", JSON.stringify(applications));
 
     alert("تم إرسال طلبك بنجاح!");
+    const templateParams = {
+  ign: ign,
+  age: age,
+  discord: discord,
+  reason: reason
+};
+
+emailjs.send("your_service_id", "your_template_id", templateParams)
+  .then(function(response) {
+    console.log("✅ تم إرسال البريد بنجاح!", response.status, response.text);
+  }, function(error) {
+    console.error("❌ فشل إرسال البريد:", error);
+  });
+
     this.reset();
   });
 
