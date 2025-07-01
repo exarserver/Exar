@@ -4,30 +4,21 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>SERVER EXAR</title>
-     <!-- باقي سكربتات الموقع -->
-  <script src="https://cdn.emailjs.com/dist/email.min.js"></script>
-  <script>
-    (function() {
-      emailjs.init("z8Sl3G2pDfxckidCk"); 
-    })();
-  </script>
-</body>
-</html>
-<style>
+
+  <!-- تنسيقات CSS -->
+  <style>
     body {
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
       margin: 0;
       background-color: #f2f2f2;
       color: #333;
     }
-
     header {
       background-color: #3b82f6;
       color: white;
       padding: 1rem;
       text-align: center;
     }
-
     nav {
       background-color: #2563eb;
       display: flex;
@@ -35,27 +26,22 @@
       gap: 1rem;
       padding: 1rem;
     }
-
     nav a {
       color: white;
       text-decoration: none;
       font-weight: bold;
       cursor: pointer;
     }
-
     nav a:hover {
       text-decoration: underline;
     }
-
     section {
       display: none;
       padding: 2rem;
     }
-
     section.active {
       display: block;
     }
-
     input, textarea, button {
       display: block;
       width: 100%;
@@ -64,18 +50,15 @@
       border-radius: 5px;
       border: 1px solid #ccc;
     }
-
     button {
       background-color: #3b82f6;
       color: white;
       border: none;
       cursor: pointer;
     }
-
     button:hover {
       background-color: #2563eb;
     }
-
     .application-card {
       background-color: #fff;
       padding: 1rem;
@@ -83,7 +66,6 @@
       border: 1px solid #ccc;
       border-radius: 8px;
     }
-
     footer {
       background-color: #eee;
       text-align: center;
@@ -91,12 +73,20 @@
       margin-top: 2rem;
     }
   </style>
+
+  <!-- EmailJS -->
+  <script src="https://cdn.emailjs.com/dist/email.min.js"></script>
+  <script>
+    (function() {
+      emailjs.init("z8Sl3G2pDfxckidCk");
+    })();
+  </script>
 </head>
 <body>
 
 <header>
   <h1>SERVER EXAR</h1>
-<img src="تصميم بدون عنوان.png" alt="شعار Exar" width="300" />
+  <img src="تصميم بدون عنوان.png" alt="شعار Exar" width="300" />
 </header>
 
 <nav>
@@ -110,7 +100,7 @@
   <!-- الرئيسية -->
   <section id="home" class="active">
     <h2>عن السيرفر</h2>
-    <p>مرحباً بك في سيرفر اكسار يمكنك التقديم للانضمام إلينا عبر صفحة التقديم </p>
+    <p>مرحباً بك في سيرفر اكسار يمكنك التقديم للانضمام إلينا عبر صفحة التقديم</p>
   </section>
 
   <!-- التقديم -->
@@ -123,15 +113,24 @@
       <input type="text" id="discord" placeholder="مثال: name#1234" required />
       <label>العمر:</label>
       <input type="number" id="age" required />
-
       <label>لماذا تريد الانضمام؟</label>
       <textarea id="reason" required></textarea>
-
       <button type="submit">إرسال</button>
     </form>
   </section>
 
-  <!-- الإدارة (تظهر فقط عند إدخال كلمة مرور) -->
+  <!-- القوانين -->
+  <section id="rules">
+    <h2>قوانين السيرفر</h2>
+    <ul>
+      <li>🚫 لا تستخدم الغش أو البرامج الممنوعة</li>
+      <li>💬 الاحترام واجب للجميع</li>
+      <li>⛏️ لا تسرق أو تدمر ممتلكات اللاعبين</li>
+      <li>🛡️ اتبع تعليمات الإدارة دائماً</li>
+    </ul>
+  </section>
+
+  <!-- لوحة الإدارة -->
   <section id="admin">
     <h2>لوحة الإدارة - المتقدمون</h2>
     <div id="applications"></div>
@@ -139,17 +138,15 @@
 </main>
 
 <footer>
-  &copy; 2025 سيرفر إكسارserver exar - جميع الحقوق محفوظة 
+  &copy; 2025 سيرفر إكسار - جميع الحقوق محفوظة
 </footer>
 
 <script>
-  // إظهار الصفحات
   function showSection(id) {
     document.querySelectorAll("section").forEach(sec => sec.classList.remove("active"));
     document.getElementById(id).classList.add("active");
   }
 
-  // حفظ التقديمات
   document.getElementById("applyForm").addEventListener("submit", function(e) {
     e.preventDefault();
     const ign = document.getElementById("ign").value.trim();
@@ -157,32 +154,22 @@
     const discord = document.getElementById("discord").value.trim();
     const reason = document.getElementById("reason").value.trim();
 
-const applications = JSON.parse(localStorage.getItem("applications") || "[]");
-applications.push({ ign, age, discord, reason });
-
+    const applications = JSON.parse(localStorage.getItem("applications") || "[]");
+    applications.push({ ign, age, discord, reason });
     localStorage.setItem("applications", JSON.stringify(applications));
-// إرسال بالبريد
-  const templateParams = {
-  ign: ign,
-  age: age,
-  discord: discord,
-  reason: reason
-};
 
-emailjs.send("service_vaheead", "template_llqj249", templateParams)
-  .then(function(response) {
-    console.log("تم إرسال الإيميل بنجاح!", response.status, response.text);
-  }, function(error) {
-    console.error("فشل في إرسال الإيميل:", error);
+    const templateParams = { ign, age, discord, reason };
+    emailjs.send("service_vaheead", "template_llqj249", templateParams)
+      .then(function(response) {
+        console.log("تم إرسال الإيميل بنجاح!", response.status, response.text);
+      }, function(error) {
+        console.error("فشل في إرسال الإيميل:", error);
+      });
+
+    alert("تم إرسال طلبك بنجاح!");
+    this.reset();
   });
 
-   
-    alert("تم إرسال طلبك بنجاح!");
-    
-};
-
-
-  // إظهار لوحة الإدارة
   function adminAccess() {
     const pass = prompt("ادخل كلمة المرور");
     if (pass === "exar3321") {
@@ -193,29 +180,28 @@ emailjs.send("service_vaheead", "template_llqj249", templateParams)
     }
   }
 
-  // تحميل المتقدمين
-function loadApplications() {
-  const container = document.getElementById("applications");
-  container.innerHTML = "";
-  const applications = JSON.parse(localStorage.getItem("applications") || "[]");
+  function loadApplications() {
+    const container = document.getElementById("applications");
+    container.innerHTML = "";
+    const applications = JSON.parse(localStorage.getItem("applications") || "[]");
 
-  if (applications.length === 0) {
-    container.innerHTML = "<p>لا يوجد متقدمين حالياً.</p>";
-    return;
+    if (applications.length === 0) {
+      container.innerHTML = "<p>لا يوجد متقدمين حالياً.</p>";
+      return;
+    }
+
+    applications.forEach((app) => {
+      const card = document.createElement("div");
+      card.className = "application-card";
+      card.innerHTML = `
+        <strong>الاسم داخل اللعبة:</strong> ${app.ign}<br>
+        <strong>العمر:</strong> ${app.age}<br>
+        <strong>ديسكورد:</strong> ${app.discord}<br>
+        <strong>السبب:</strong> ${app.reason}
+      `;
+      container.appendChild(card);
+    });
   }
-
-  applications.forEach((app, index) => {
-    const card = document.createElement("div");
-    card.className = "application-card";
-    card.innerHTML = `
-      <strong>الاسم داخل اللعبة:</strong> ${app.ign}<br>
-      <strong>العمر:</strong> ${app.age}<br>
-      <strong>ديسكورد:</strong> ${app.discord}<br>
-      <strong>السبب:</strong> ${app.reason}
-    `;
-    container.appendChild(card);
-  });
-}
-  
 </script>
-  <a href="rules.html">قوانين السيرفر</a>
+</body>
+</html>
