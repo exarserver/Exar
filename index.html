@@ -110,6 +110,8 @@
     <form id="applyForm">
       <label>الاسم داخل اللعبة:</label>
       <input type="text" id="ign" required />
+      <label>حسابك في ديسكورد:</label>
+      <input type="text" id="discord" placeholder="مثال: name#1234" required />
       <label>العمر:</label>
       <input type="number" id="age" required />
 
@@ -143,10 +145,12 @@
     e.preventDefault();
     const ign = document.getElementById("ign").value.trim();
     const age = document.getElementById("age").value.trim();
+    const discord = document.getElementById("discord").value.trim();
     const reason = document.getElementById("reason").value.trim();
 
-    const applications = JSON.parse(localStorage.getItem("applications") || "[]");
-    applications.push({ ign, age, reason });
+const applications = JSON.parse(localStorage.getItem("applications") || "[]");
+applications.push({ ign, age, discord, reason });
+
     localStorage.setItem("applications", JSON.stringify(applications));
 
     alert("تم إرسال طلبك بنجاح!");
@@ -165,26 +169,28 @@
   }
 
   // تحميل المتقدمين
-  function loadApplications() {
-    const container = document.getElementById("applications");
-    container.innerHTML = "";
-    const applications = JSON.parse(localStorage.getItem("applications") || "[]");
+function loadApplications() {
+  const container = document.getElementById("applications");
+  container.innerHTML = "";
+  const applications = JSON.parse(localStorage.getItem("applications") || "[]");
 
-    if (applications.length === 0) {
-      container.innerHTML = "<p>لا يوجد متقدمين حالياً.</p>";
-      return;
-    }
-
-    applications.forEach((app, index) => {
-      const card = document.createElement("div");
-      card.className = "application-card";
-      card.innerHTML = `
-        <strong>الاسم داخل اللعبة:</strong> ${app.ign}<br>
-        <strong>العمر:</strong> ${app.age}<br>
-        <strong>السبب:</strong> ${app.reason}
-      `;
-      container.appendChild(card);
-    });
+  if (applications.length === 0) {
+    container.innerHTML = "<p>لا يوجد متقدمين حالياً.</p>";
+    return;
   }
+
+  applications.forEach((app, index) => {
+    const card = document.createElement("div");
+    card.className = "application-card";
+    card.innerHTML = `
+      <strong>الاسم داخل اللعبة:</strong> ${app.ign}<br>
+      <strong>العمر:</strong> ${app.age}<br>
+      <strong>ديسكورد:</strong> ${app.discord}<br>
+      <strong>السبب:</strong> ${app.reason}
+    `;
+    container.appendChild(card);
+  });
+}
+  
 </script>
   <a href="rules.html">قوانين السيرفر</a>
