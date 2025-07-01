@@ -77,9 +77,9 @@
   <!-- EmailJS -->
   <script src="https://cdn.emailjs.com/dist/email.min.js"></script>
   <script>
-    (function() {
+    window.addEventListener("DOMContentLoaded", function() {
       emailjs.init("z8Sl3G2pDfxckidCk");
-    })();
+    });
   </script>
 </head>
 <body>
@@ -161,12 +161,13 @@
     const templateParams = { ign, age, discord, reason };
     emailjs.send("service_vaheead", "template_llqj249", templateParams)
       .then(function(response) {
+        alert("تم إرسال طلبك بنجاح!");
         console.log("تم إرسال الإيميل بنجاح!", response.status, response.text);
       }, function(error) {
+        alert("حدث خطأ أثناء إرسال البريد، تأكد من إعدادات EmailJS.");
         console.error("فشل في إرسال الإيميل:", error);
       });
 
-    alert("تم إرسال طلبك بنجاح!");
     this.reset();
   });
 
