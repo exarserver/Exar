@@ -3,338 +3,803 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>SERVER EXAR</title>
-
+  <title>SERVER EXAR - سيرفر إكسار</title>
+  
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;900&display=swap" rel="stylesheet">
+  
   <!-- تنسيقات CSS -->
   <style>
-    body {
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    * {
       margin: 0;
-      background-color: #f2f2f2;
-      color: #333;
+      padding: 0;
+      box-sizing: border-box;
     }
-    pre {
-      background: #f8f9fa; 
-      padding: 10px; 
-      border-radius: 5px; 
-      text-align: left; 
-      direction: ltr;
-      border: 1px solid #dee2e6;
-      overflow-x: auto;
-      font-family: 'Courier New', monospace;
-      font-size: 14px;
+    
+    :root {
+      --primary: #667eea;
+      --primary-dark: #5a67d8;
+      --secondary: #764ba2;
+      --accent: #f093fb;
+      --success: #48bb78;
+      --danger: #f56565;
+      --warning: #ed8936;
+      --info: #4299e1;
+      --dark: #2d3748;
+      --light: #f7fafc;
+      --gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      --gradient-accent: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
     }
+    
+    body {
+      font-family: 'Cairo', sans-serif;
+      background: #0f0f1e;
+      color: #e2e8f0;
+      line-height: 1.6;
+      overflow-x: hidden;
+    }
+    
+    /* خلفية متحركة */
+    body::before {
+      content: '';
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(45deg, #0f0f1e, #1a1a2e, #16213e);
+      background-size: 400% 400%;
+      animation: gradientShift 15s ease infinite;
+      z-index: -2;
+    }
+    
+    @keyframes gradientShift {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+    
+    /* نقاط متحركة في الخلفية */
+    .bg-animation {
+      position: fixed;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      z-index: -1;
+    }
+    
+    .bg-animation span {
+      position: absolute;
+      width: 20px;
+      height: 20px;
+      background: rgba(255, 255, 255, 0.1);
+      animation: move 25s linear infinite;
+      border-radius: 50%;
+    }
+    
+    @keyframes move {
+      from {
+        transform: translateY(100vh) scale(0);
+      }
+      to {
+        transform: translateY(-100vh) scale(1);
+      }
+    }
+    
+    /* Header */
     header {
-      background-color: #3b82f6;
-      color: white;
-      padding: 1rem;
+      background: rgba(15, 15, 30, 0.95);
+      backdrop-filter: blur(10px);
+      padding: 2rem;
       text-align: center;
+      position: relative;
+      overflow: hidden;
+      border-bottom: 2px solid rgba(102, 126, 234, 0.3);
     }
+    
+    header::before {
+      content: '';
+      position: absolute;
+      top: -50%;
+      left: -50%;
+      width: 200%;
+      height: 200%;
+      background: radial-gradient(circle, rgba(102, 126, 234, 0.1) 0%, transparent 70%);
+      animation: pulse 4s ease-in-out infinite;
+    }
+    
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); opacity: 0.5; }
+      50% { transform: scale(1.1); opacity: 0.8; }
+    }
+    
+    header h1 {
+      font-size: 3.5rem;
+      font-weight: 900;
+      background: var(--gradient);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-bottom: 0.5rem;
+      position: relative;
+      z-index: 1;
+      text-shadow: 0 0 80px rgba(102, 126, 234, 0.5);
+      animation: glow 2s ease-in-out infinite alternate;
+    }
+    
+    @keyframes glow {
+      from { text-shadow: 0 0 30px rgba(102, 126, 234, 0.5); }
+      to { text-shadow: 0 0 50px rgba(102, 126, 234, 0.8), 0 0 70px rgba(118, 75, 162, 0.5); }
+    }
+    
+    /* Navigation */
     nav {
-      background-color: #2563eb;
+      background: rgba(26, 26, 46, 0.95);
+      backdrop-filter: blur(10px);
       display: flex;
       justify-content: center;
-      gap: 1rem;
-      padding: 1rem;
+      gap: 2rem;
+      padding: 1.5rem;
+      position: sticky;
+      top: 0;
+      z-index: 1000;
+      box-shadow: 0 5px 30px rgba(0, 0, 0, 0.5);
     }
+    
     nav a {
-      color: white;
+      color: #e2e8f0;
       text-decoration: none;
-      font-weight: bold;
-      cursor: pointer;
+      font-weight: 600;
+      font-size: 1.1rem;
+      padding: 0.7rem 1.5rem;
+      border-radius: 30px;
+      transition: all 0.3s ease;
+      position: relative;
+      overflow: hidden;
     }
+    
+    nav a::before {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 0;
+      height: 0;
+      background: var(--gradient);
+      border-radius: 50%;
+      transform: translate(-50%, -50%);
+      transition: all 0.5s ease;
+    }
+    
+    nav a:hover::before {
+      width: 300px;
+      height: 300px;
+    }
+    
     nav a:hover {
-      text-decoration: underline;
+      color: white;
+      transform: translateY(-2px);
+      z-index: 1;
     }
+    
+    nav a span {
+      position: relative;
+      z-index: 1;
+    }
+    
+    /* Badge */
+    .badge {
+      background: var(--gradient-accent);
+      color: white;
+      padding: 3px 8px;
+      border-radius: 15px;
+      font-size: 0.75rem;
+      font-weight: 700;
+      position: absolute;
+      top: -8px;
+      right: -10px;
+      box-shadow: 0 2px 10px rgba(240, 147, 251, 0.5);
+      animation: bounce 2s infinite;
+    }
+    
+    @keyframes bounce {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-5px); }
+    }
+    
+    /* Sections */
     section {
       display: none;
-      padding: 2rem;
+      padding: 3rem 2rem;
+      max-width: 1200px;
+      margin: 0 auto;
+      animation: fadeInUp 0.5s ease;
     }
+    
     section.active {
       display: block;
     }
-    input, textarea, button {
-      display: block;
-      width: 100%;
-      margin: 0.5rem 0;
-      padding: 0.5rem;
-      border-radius: 5px;
-      border: 1px solid #ccc;
+    
+    @keyframes fadeInUp {
+      from {
+        opacity: 0;
+        transform: translateY(30px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
     }
+    
+    /* Content Cards */
+    .content-card {
+      background: rgba(26, 26, 46, 0.8);
+      backdrop-filter: blur(10px);
+      border-radius: 20px;
+      padding: 2rem;
+      margin-bottom: 2rem;
+      border: 1px solid rgba(102, 126, 234, 0.2);
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+      transition: all 0.3s ease;
+    }
+    
+    .content-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 15px 40px rgba(102, 126, 234, 0.3);
+      border-color: rgba(102, 126, 234, 0.5);
+    }
+    
+    h2 {
+      font-size: 2.5rem;
+      font-weight: 700;
+      margin-bottom: 1.5rem;
+      background: var(--gradient);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    
+    /* Forms */
+    form {
+      background: rgba(26, 26, 46, 0.8);
+      backdrop-filter: blur(10px);
+      border-radius: 20px;
+      padding: 2rem;
+      border: 1px solid rgba(102, 126, 234, 0.2);
+    }
+    
+    label {
+      display: block;
+      margin-bottom: 0.5rem;
+      color: #a0aec0;
+      font-weight: 600;
+      font-size: 0.95rem;
+    }
+    
+    input, textarea {
+      width: 100%;
+      padding: 0.8rem 1.2rem;
+      margin-bottom: 1.5rem;
+      background: rgba(15, 15, 30, 0.8);
+      border: 2px solid rgba(102, 126, 234, 0.2);
+      border-radius: 10px;
+      color: #e2e8f0;
+      font-size: 1rem;
+      transition: all 0.3s ease;
+      font-family: 'Cairo', sans-serif;
+    }
+    
+    input:focus, textarea:focus {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+      transform: translateY(-2px);
+    }
+    
     button {
-      background-color: #3b82f6;
+      background: var(--gradient);
       color: white;
       border: none;
+      padding: 0.8rem 2rem;
+      font-size: 1rem;
+      font-weight: 600;
+      border-radius: 50px;
       cursor: pointer;
+      transition: all 0.3s ease;
+      box-shadow: 0 5px 20px rgba(102, 126, 234, 0.3);
+      position: relative;
+      overflow: hidden;
     }
-    button:hover {
-      background-color: #2563eb;
-    }
-    .application-card {
-      background-color: #fff;
-      padding: 1rem;
-      margin: 0.5rem 0;
-      border: 1px solid #ccc;
-      border-radius: 8px;
-    }
-    footer {
-      background-color: #eee;
-      text-align: center;
-      padding: 1rem;
-      margin-top: 2rem;
-    }
-    code {
-      background-color: #f3f4f6;
-      padding: 2px 6px;
-      border-radius: 3px;
-      font-family: monospace;
-      font-size: 0.9em;
-    }
-    .error-message {
-      background-color: #fee;
-      color: #c00;
-      padding: 10px;
-      border-radius: 5px;
-      margin: 10px 0;
-      display: none;
-    }
-    .success-message {
-      background-color: #efe;
-      color: #080;
-      padding: 10px;
-      border-radius: 5px;
-      margin: 10px 0;
-      display: none;
-    }
-    .loader {
-      border: 4px solid #f3f3f3;
+    
+    button::before {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 0;
+      height: 0;
+      background: rgba(255, 255, 255, 0.2);
       border-radius: 50%;
-      border-top: 4px solid #3b82f6;
-      width: 40px;
-      height: 40px;
-      animation: spin 1s linear infinite;
+      transform: translate(-50%, -50%);
+      transition: all 0.6s ease;
+    }
+    
+    button:hover::before {
+      width: 300px;
+      height: 300px;
+    }
+    
+    button:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 8px 30px rgba(102, 126, 234, 0.5);
+    }
+    
+    button:active {
+      transform: translateY(-1px);
+    }
+    
+    /* Alerts */
+    .alert {
+      padding: 1rem 1.5rem;
+      border-radius: 10px;
+      margin-bottom: 1.5rem;
+      font-weight: 500;
+      display: none;
+      animation: slideInRight 0.3s ease;
+    }
+    
+    @keyframes slideInRight {
+      from {
+        opacity: 0;
+        transform: translateX(30px);
+      }
+      to {
+        opacity: 1;
+        transform: translateX(0);
+      }
+    }
+    
+    .error-message {
+      background: rgba(245, 101, 101, 0.1);
+      border: 1px solid rgba(245, 101, 101, 0.3);
+      color: #fc8181;
+    }
+    
+    .success-message {
+      background: rgba(72, 187, 120, 0.1);
+      border: 1px solid rgba(72, 187, 120, 0.3);
+      color: #68d391;
+    }
+    
+    /* Info Boxes */
+    .info-box {
+      background: rgba(66, 153, 225, 0.1);
+      border: 1px solid rgba(66, 153, 225, 0.3);
+      border-radius: 15px;
+      padding: 1.5rem;
+      margin-bottom: 1.5rem;
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .info-box::before {
+      content: '💡';
+      position: absolute;
+      top: -20px;
+      right: -20px;
+      font-size: 4rem;
+      opacity: 0.1;
+    }
+    
+    /* Loader */
+    .loader {
+      width: 50px;
+      height: 50px;
       margin: 20px auto;
       display: none;
     }
+    
+    .loader::after {
+      content: '';
+      display: block;
+      width: 40px;
+      height: 40px;
+      margin: 5px;
+      border-radius: 50%;
+      border: 3px solid transparent;
+      border-top-color: var(--primary);
+      border-bottom-color: var(--secondary);
+      animation: spin 1s linear infinite;
+    }
+    
     @keyframes spin {
       0% { transform: rotate(0deg); }
       100% { transform: rotate(360deg); }
     }
-    .info-box {
-      background: #e3f2fd;
-      padding: 10px;
-      border-radius: 5px;
-      border: 1px solid #2196f3;
-      margin: 10px 0;
+    
+    /* Rules Section */
+    #rules ul {
+      list-style: none;
+      padding: 0;
     }
-    .success-box {
-      background: #e8f5e9;
-      padding: 10px;
-      border-radius: 5px;
-      border: 1px solid #4caf50;
-      margin: 10px 0;
-    }
-    .warning-box {
-      background: #fff3cd;
-      padding: 10px;
-      border-radius: 5px;
-      border: 1px solid #ffc107;
-      margin: 10px 0;
-      color: #856404;
-    }
-    .badge {
-      background: red;
-      color: white;
-      padding: 2px 6px;
+    
+    #rules li {
+      background: rgba(26, 26, 46, 0.8);
+      margin-bottom: 1rem;
+      padding: 1.2rem;
       border-radius: 10px;
-      font-size: 12px;
-      display: none;
-      vertical-align: super;
-      margin-right: 5px;
+      border-left: 4px solid var(--primary);
+      transition: all 0.3s ease;
+      position: relative;
+      overflow: hidden;
     }
-    .card-header {
-      background: #f5f5f5;
-      padding: 5px;
-      margin-bottom: 10px;
-      border-radius: 5px;
-      font-weight: bold;
+    
+    #rules li::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 0;
+      height: 100%;
+      background: rgba(102, 126, 234, 0.1);
+      transition: all 0.3s ease;
     }
-    .admin-note {
-      color: #2196f3;
-      font-style: italic;
-      margin-top: 5px;
+    
+    #rules li:hover::before {
+      width: 100%;
     }
-    .action-buttons {
-      margin-top: 10px;
-      display: flex;
-      gap: 5px;
+    
+    #rules li:hover {
+      transform: translateX(10px);
     }
-    .action-buttons button {
-      flex: 1;
-    }
+    
+    /* Admin Section */
     .stats-container {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-      gap: 10px;
-      margin-bottom: 20px;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 1.5rem;
+      margin-bottom: 2rem;
     }
+    
     .stat-card {
-      background: white;
-      padding: 15px;
-      border-radius: 8px;
-      border: 1px solid #ddd;
+      background: var(--gradient);
+      border-radius: 20px;
+      padding: 2rem;
       text-align: center;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+      transition: all 0.3s ease;
+      position: relative;
+      overflow: hidden;
     }
+    
+    .stat-card::before {
+      content: '';
+      position: absolute;
+      top: -50%;
+      left: -50%;
+      width: 200%;
+      height: 200%;
+      background: rgba(255, 255, 255, 0.1);
+      transform: rotate(45deg);
+      transition: all 0.5s ease;
+    }
+    
+    .stat-card:hover::before {
+      top: -60%;
+      left: -60%;
+    }
+    
+    .stat-card:hover {
+      transform: translateY(-5px) scale(1.02);
+      box-shadow: 0 15px 40px rgba(102, 126, 234, 0.4);
+    }
+    
     .stat-number {
-      font-size: 2em;
-      font-weight: bold;
-      color: #3b82f6;
+      font-size: 3rem;
+      font-weight: 900;
+      color: white;
+      text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
     }
+    
     .stat-label {
-      color: #666;
-      font-size: 0.9em;
+      color: rgba(255, 255, 255, 0.9);
+      font-size: 1.1rem;
+      font-weight: 600;
+      margin-top: 0.5rem;
     }
+    
+    /* Application Cards */
+    .application-card {
+      background: rgba(26, 26, 46, 0.8);
+      backdrop-filter: blur(10px);
+      border-radius: 20px;
+      padding: 1.5rem;
+      margin-bottom: 1.5rem;
+      border: 1px solid rgba(102, 126, 234, 0.2);
+      box-shadow: 0 5px 20px rgba(0, 0, 0, 0.3);
+      transition: all 0.3s ease;
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .application-card::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(102, 126, 234, 0.2), transparent);
+      transition: all 0.5s ease;
+    }
+    
+    .application-card:hover::after {
+      left: 100%;
+    }
+    
+    .application-card:hover {
+      transform: translateY(-3px);
+      border-color: rgba(102, 126, 234, 0.5);
+      box-shadow: 0 10px 30px rgba(102, 126, 234, 0.2);
+    }
+    
+    .card-header {
+      background: rgba(102, 126, 234, 0.2);
+      padding: 0.8rem;
+      margin: -1.5rem -1.5rem 1rem;
+      border-radius: 20px 20px 10px 10px;
+      font-weight: 600;
+      color: #e2e8f0;
+    }
+    
+    .admin-note {
+      background: rgba(66, 153, 225, 0.1);
+      border: 1px solid rgba(66, 153, 225, 0.3);
+      border-radius: 10px;
+      padding: 0.8rem;
+      margin-top: 1rem;
+      color: #63b3ed;
+      font-style: italic;
+    }
+    
+    .action-buttons {
+      display: flex;
+      gap: 0.5rem;
+      margin-top: 1rem;
+    }
+    
+    .action-buttons button {
+      flex: 1;
+      padding: 0.6rem 1rem;
+      font-size: 0.9rem;
+    }
+    
+    /* Search Input */
     #searchInput {
       width: 100%;
-      padding: 10px;
-      font-size: 16px;
-      border: 2px solid #3b82f6;
-      border-radius: 5px;
-      margin-bottom: 15px;
+      padding: 1rem 1.5rem;
+      font-size: 1.1rem;
+      background: rgba(15, 15, 30, 0.8);
+      border: 2px solid rgba(102, 126, 234, 0.3);
+      border-radius: 50px;
+      color: #e2e8f0;
+      margin-bottom: 1.5rem;
+      transition: all 0.3s ease;
     }
+    
     #searchInput:focus {
       outline: none;
-      border-color: #2563eb;
+      border-color: var(--primary);
+      box-shadow: 0 0 20px rgba(102, 126, 234, 0.3);
     }
+    
+    /* Filter Badges */
     .filter-badges {
       display: flex;
-      gap: 10px;
-      margin-bottom: 15px;
+      gap: 1rem;
+      margin-bottom: 2rem;
       flex-wrap: wrap;
     }
+    
     .filter-badge {
-      background: #e3f2fd;
-      color: #1976d2;
-      padding: 5px 10px;
-      border-radius: 15px;
+      background: rgba(26, 26, 46, 0.8);
+      color: #a0aec0;
+      padding: 0.6rem 1.5rem;
+      border-radius: 25px;
       cursor: pointer;
-      font-size: 0.9em;
+      font-weight: 600;
+      transition: all 0.3s ease;
+      border: 2px solid rgba(102, 126, 234, 0.2);
     }
+    
     .filter-badge:hover {
-      background: #bbdefb;
-    }
-    .filter-badge.active {
-      background: #1976d2;
+      background: rgba(102, 126, 234, 0.2);
+      border-color: var(--primary);
       color: white;
+      transform: translateY(-2px);
+    }
+    
+    .filter-badge.active {
+      background: var(--gradient);
+      color: white;
+      border-color: transparent;
+      box-shadow: 0 5px 20px rgba(102, 126, 234, 0.3);
+    }
+    
+    /* Footer */
+    footer {
+      background: rgba(15, 15, 30, 0.95);
+      text-align: center;
+      padding: 2rem;
+      margin-top: 3rem;
+      border-top: 1px solid rgba(102, 126, 234, 0.2);
+      color: #a0aec0;
+    }
+    
+    /* Responsive */
+    @media (max-width: 768px) {
+      header h1 {
+        font-size: 2.5rem;
+      }
+      
+      nav {
+        gap: 0.5rem;
+        padding: 1rem;
+      }
+      
+      nav a {
+        padding: 0.5rem 1rem;
+        font-size: 0.9rem;
+      }
+      
+      .stats-container {
+        grid-template-columns: 1fr;
+      }
+      
+      .action-buttons {
+        flex-direction: column;
+      }
+    }
+    
+    /* Custom Scrollbar */
+    ::-webkit-scrollbar {
+      width: 10px;
+    }
+    
+    ::-webkit-scrollbar-track {
+      background: rgba(15, 15, 30, 0.5);
+    }
+    
+    ::-webkit-scrollbar-thumb {
+      background: var(--gradient);
+      border-radius: 5px;
+    }
+    
+    ::-webkit-scrollbar-thumb:hover {
+      background: var(--primary-dark);
     }
   </style>
 </head>
 <body>
+  <!-- خلفية متحركة -->
+  <div class="bg-animation">
+    <span style="top: 20%; left: 10%; animation-delay: 0s;"></span>
+    <span style="top: 40%; left: 30%; animation-delay: 2s;"></span>
+    <span style="top: 60%; left: 50%; animation-delay: 4s;"></span>
+    <span style="top: 80%; left: 70%; animation-delay: 6s;"></span>
+    <span style="top: 10%; left: 90%; animation-delay: 8s;"></span>
+  </div>
 
-<header>
-  <h1>SERVER EXAR</h1>
-  <img src="تصميم بدون عنوان.png" alt="شعار Exar" width="300" onerror="this.style.display='none';" />
-</header>
+  <header>
+    <h1>SERVER EXAR</h1>
+    <p style="color: #a0aec0; font-size: 1.2rem;">مرحباً بك في عالم الإبداع والمغامرة</p>
+  </header>
 
-<nav>
-  <a onclick="showSection('home')">الرئيسية</a>
-  <a onclick="showSection('apply')">التقديم</a>
-  <a onclick="showSection('rules')">القوانين</a>
-  <a onclick="adminAccess()">لوحة الإدارة <span id="notificationBadge" class="badge">0</span></a>
-</nav>
+  <nav>
+    <a onclick="showSection('home')"><span>الرئيسية</span></a>
+    <a onclick="showSection('apply')"><span>التقديم</span></a>
+    <a onclick="showSection('rules')"><span>القوانين</span></a>
+    <a onclick="adminAccess()" style="position: relative;">
+      <span>لوحة الإدارة</span>
+      <span id="notificationBadge" class="badge">0</span>
+    </a>
+  </nav>
 
-<main>
-  <!-- الرئيسية -->
-  <section id="home" class="active">
-    <h2>عن السيرفر</h2>
-    <p>مرحباً بك في سيرفر اكسار يمكنك التقديم للانضمام إلينا عبر صفحة التقديم</p>
-  </section>
+  <main>
+    <!-- الرئيسية -->
+    <section id="home" class="active">
+      <div class="content-card">
+        <h2>عن السيرفر</h2>
+        <p style="font-size: 1.2rem; line-height: 1.8;">
+          مرحباً بك في سيرفر إكسار. 
+          انضم إلينا لتعيش تجربة لعب فريدة مع مجتمع رائع من اللاعبين.
+          يمكنك التقديم للانضمام إلينا عبر صفحة التقديم.
+        </p>
+      </div>
+    </section>
 
-  <!-- التقديم -->
-  <section id="apply">
-    <h2>نموذج التقديم</h2>
-    
-    <div class="info-box">
-      <strong>📝 املأ البيانات التالية للتقديم:</strong>
-    </div>
-    
-    <div class="error-message" id="errorMessage"></div>
-    <div class="success-message" id="successMessage"></div>
-    
-    <!-- نموذج بسيط يعمل مع Formspree -->
-    <form id="applyForm">
-      <label>الاسم داخل اللعبة:</label>
-      <input type="text" name="ign" id="ign" required />
+    <!-- التقديم -->
+    <section id="apply">
+      <h2>نموذج التقديم</h2>
       
-      <label>حسابك في ديسكورد:</label>
-      <input type="text" name="discord" id="discord" placeholder="مثال: name#1234" required />
+      <div class="info-box">
+        <strong>📝 املأ البيانات التالية للتقديم:</strong>
+      </div>
       
-      <label>البريد الإلكتروني:</label>
-      <input type="email" name="email" id="email" placeholder="your@email.com" />
+      <div class="error-message alert" id="errorMessage"></div>
+      <div class="success-message alert" id="successMessage"></div>
       
-      <label>العمر:</label>
-      <input type="number" name="age" id="age" min="10" max="100" required />
-      
-      <label>لماذا تريد الانضمام؟</label>
-      <textarea name="reason" id="reason" rows="4" required></textarea>
-      
-      <button type="submit" id="submitBtn">إرسال الطلب</button>
-      <div class="loader" id="loader"></div>
-    </form>
-  </section>
+      <form id="applyForm">
+        <label>الاسم داخل اللعبة:</label>
+        <input type="text" name="ign" id="ign" required />
+        
+        <label>حسابك في ديسكورد:</label>
+        <input type="text" name="discord" id="discord" placeholder="مثال: name#1234" required />
+        
+        <label>البريد الإلكتروني:</label>
+        <input type="email" name="email" id="email" placeholder="your@email.com" />
+        
+        <label>العمر:</label>
+        <input type="number" name="age" id="age" min="10" max="100" required />
+        
+        <label>لماذا تريد الانضمام؟</label>
+        <textarea name="reason" id="reason" rows="4" required></textarea>
+        
+        <button type="submit" id="submitBtn">إرسال الطلب</button>
+        <div class="loader" id="loader"></div>
+      </form>
+    </section>
 
-  <!-- القوانين -->
-  <section id="rules">
-    <h2>قوانين السيرفر</h2>
-    <ul>
-      <li>🚫 لا تستخدم الغش أو البرامج الممنوعة</li>
-      <li>💬 الاحترام واجب للجميع</li>
-      <li>⛏️ لا تسرق أو تدمر ممتلكات اللاعبين</li>
-      <li>🛡️ اتبع تعليمات الإدارة دائماً</li>
-      <li>🎮 اللعب النظيف والتعاون مع الفريق</li>
-      <li>🚪 عدم دخول ممتلكات الآخرين بدون إذن</li>
-      <li>💎 عدم سرقة الموارد من اللاعبين</li>
-      <li>🔊 استخدام الصوت باحترام في المحادثات</li>
-    </ul>
-  </section>
+    <!-- القوانين -->
+    <section id="rules">
+      <h2>قوانين السيرفر</h2>
+      <ul>
+        <li>🚫 لا تستخدم الغش أو البرامج الممنوعة</li>
+        <li>💬 الاحترام واجب للجميع</li>
+        <li>⛏️ لا تسرق أو تدمر ممتلكات اللاعبين</li>
+        <li>🛡️ اتبع تعليمات الإدارة دائماً</li>
+        <li>🎮 اللعب النظيف والتعاون مع الفريق</li>
+        <li>🚪 عدم دخول ممتلكات الآخرين بدون إذن</li>
+        <li>💎 عدم سرقة الموارد من اللاعبين</li>
+        <li>🔊 استخدام الصوت باحترام في المحادثات</li>
+      </ul>
+    </section>
 
-  <!-- لوحة الإدارة -->
-  <section id="admin">
-    <h2>لوحة الإدارة - المتقدمون</h2>
-    
-    <!-- أزرار الإدارة -->
-    <div style="margin-bottom: 1rem; display: flex; gap: 5px; flex-wrap: wrap;">
-      <button onclick="exportApplications()" style="background-color: #4caf50;">📥 تصدير البيانات</button>
-      <button onclick="importApplications()" style="background-color: #2196f3;">📤 استيراد البيانات</button>
-      <button onclick="exportToCSV()" style="background-color: #ff9800;">📊 تصدير Excel</button>
-      <button onclick="clearAllApplications()" style="background-color: #dc3545;">🗑️ مسح الكل</button>
-    </div>
-    
-    <!-- الإحصائيات -->
-    <div class="stats-container" id="statsContainer"></div>
-    
-    <!-- البحث والفلترة -->
-    <input type="text" id="searchInput" placeholder="🔍 البحث في الطلبات..." onkeyup="searchApplications()">
-    
-    <div class="filter-badges">
-      <div class="filter-badge active" onclick="filterByAge('all')">الكل</div>
-      <div class="filter-badge" onclick="filterByAge('10-15')">10-15 سنة</div>
-      <div class="filter-badge" onclick="filterByAge('16-20')">16-20 سنة</div>
-      <div class="filter-badge" onclick="filterByAge('21+')">21+ سنة</div>
-    </div>
-    
-    <div class="info-box">
-      <strong>💾 البيانات محفوظة في المتصفح</strong><br>
-      <small>⚠️ البيانات محفوظة في هذا المتصفح فقط. استخدم التصدير للنسخ الاحتياطي.</small>
-    </div>
-    
-    <div id="applications"></div>
-  </section>
-</main>
+    <!-- لوحة الإدارة -->
+    <section id="admin">
+      <h2>لوحة الإدارة - المتقدمون</h2>
+      
+      <!-- أزرار الإدارة -->
+      <div style="margin-bottom: 2rem; display: flex; gap: 0.5rem; flex-wrap: wrap;">
+        <button onclick="exportApplications()" style="background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);">📥 تصدير البيانات</button>
+        <button onclick="importApplications()" style="background: linear-gradient(135deg, #4299e1 0%, #3182ce 100%);">📤 استيراد البيانات</button>
+        <button onclick="exportToCSV()" style="background: linear-gradient(135deg, #ed8936 0%, #dd6b20 100%);">📊 تصدير Excel</button>
+        <button onclick="clearAllApplications()" style="background: linear-gradient(135deg, #f56565 0%, #e53e3e 100%);">🗑️ مسح الكل</button>
+      </div>
+      
+      <!-- الإحصائيات -->
+      <div class="stats-container" id="statsContainer"></div>
+      
+      <!-- البحث والفلترة -->
+      <input type="text" id="searchInput" placeholder="🔍 البحث في الطلبات..." onkeyup="searchApplications()">
+      
+      <div class="filter-badges">
+        <div class="filter-badge active" onclick="filterByAge('all')">الكل</div>
+        <div class="filter-badge" onclick="filterByAge('10-15')">10-15 سنة</div>
+        <div class="filter-badge" onclick="filterByAge('16-20')">16-20 سنة</div>
+        <div class="filter-badge" onclick="filterByAge('21+')">21+ سنة</div>
+      </div>
+      
+      <div class="info-box">
+        <strong>💾 البيانات محفوظة في المتصفح</strong><br>
+        <small>⚠️ البيانات محفوظة في هذا المتصفح فقط. استخدم التصدير للنسخ الاحتياطي.</small>
+      </div>
+      
+      <div id="applications"></div>
+    </section>
+  </main>
 
-<footer>
-  &copy; 2025 سيرفر إكسار - جميع الحقوق محفوظة
-</footer>
+  <footer>
+    &copy; 2025 سيرفر إكسار - جميع الحقوق محفوظة | صُمم بـ ❤️
+  </footer>
 
 <script>
 // رابط Formspree
@@ -384,7 +849,7 @@ function updateNotificationBadge() {
   
   if (newCount > 0) {
     badge.textContent = newCount;
-    badge.style.display = 'inline-block';
+    badge.style.display = 'block';
   } else {
     badge.style.display = 'none';
   }
@@ -577,7 +1042,7 @@ function displayApplications(apps) {
   container.innerHTML = "";
 
   if (apps.length === 0) {
-    container.innerHTML = "<p>لا توجد نتائج.</p>";
+    container.innerHTML = "<p style='text-align: center; color: #a0aec0;'>لا توجد نتائج.</p>";
     return;
   }
 
@@ -588,7 +1053,7 @@ function displayApplications(apps) {
     card.innerHTML = `
       <div class="card-header">
         طلب #${actualIndex + 1} - ${app.date}
-        ${app.status === 'جديد' ? '<span style="color: green; float: left;">● جديد</span>' : ''}
+        ${app.status === 'جديد' ? '<span style="color: #68d391; float: left;">● جديد</span>' : ''}
       </div>
       <strong>الاسم داخل اللعبة:</strong> ${app.ign}<br>
       <strong>العمر:</strong> ${app.age}<br>
@@ -597,9 +1062,9 @@ function displayApplications(apps) {
       <strong>السبب:</strong> ${app.reason}<br>
       ${app.notes ? `<div class="admin-note"><strong>ملاحظات الإدارة:</strong> ${app.notes}</div>` : ''}
       <div class="action-buttons">
-        <button onclick="addNote(${actualIndex})" style="background-color: #2196f3;">📝 ملاحظة</button>
-        <button onclick="markAsRead(${actualIndex})" style="background-color: #4caf50;">✓ تم القراءة</button>
-        <button onclick="removeApplication(${actualIndex})" style="background-color: #dc3545;">حذف</button>
+        <button onclick="addNote(${actualIndex})" style="background: linear-gradient(135deg, #4299e1 0%, #3182ce 100%);">📝 ملاحظة</button>
+        <button onclick="markAsRead(${actualIndex})" style="background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);">✓ تم القراءة</button>
+        <button onclick="removeApplication(${actualIndex})" style="background: linear-gradient(135deg, #f56565 0%, #e53e3e 100%);">حذف</button>
       </div>
     `;
     container.appendChild(card);
