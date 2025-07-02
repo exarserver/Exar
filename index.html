@@ -142,6 +142,91 @@
       margin: 10px 0;
       color: #856404;
     }
+    .badge {
+      background: red;
+      color: white;
+      padding: 2px 6px;
+      border-radius: 10px;
+      font-size: 12px;
+      display: none;
+      vertical-align: super;
+      margin-right: 5px;
+    }
+    .card-header {
+      background: #f5f5f5;
+      padding: 5px;
+      margin-bottom: 10px;
+      border-radius: 5px;
+      font-weight: bold;
+    }
+    .admin-note {
+      color: #2196f3;
+      font-style: italic;
+      margin-top: 5px;
+    }
+    .action-buttons {
+      margin-top: 10px;
+      display: flex;
+      gap: 5px;
+    }
+    .action-buttons button {
+      flex: 1;
+    }
+    .stats-container {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+    .stat-card {
+      background: white;
+      padding: 15px;
+      border-radius: 8px;
+      border: 1px solid #ddd;
+      text-align: center;
+    }
+    .stat-number {
+      font-size: 2em;
+      font-weight: bold;
+      color: #3b82f6;
+    }
+    .stat-label {
+      color: #666;
+      font-size: 0.9em;
+    }
+    #searchInput {
+      width: 100%;
+      padding: 10px;
+      font-size: 16px;
+      border: 2px solid #3b82f6;
+      border-radius: 5px;
+      margin-bottom: 15px;
+    }
+    #searchInput:focus {
+      outline: none;
+      border-color: #2563eb;
+    }
+    .filter-badges {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 15px;
+      flex-wrap: wrap;
+    }
+    .filter-badge {
+      background: #e3f2fd;
+      color: #1976d2;
+      padding: 5px 10px;
+      border-radius: 15px;
+      cursor: pointer;
+      font-size: 0.9em;
+    }
+    .filter-badge:hover {
+      background: #bbdefb;
+    }
+    .filter-badge.active {
+      background: #1976d2;
+      color: white;
+    }
   </style>
 </head>
 <body>
@@ -155,7 +240,7 @@
   <a onclick="showSection('home')">الرئيسية</a>
   <a onclick="showSection('apply')">التقديم</a>
   <a onclick="showSection('rules')">القوانين</a>
-  <a onclick="adminAccess()">لوحة الإدارة</a>
+  <a onclick="adminAccess()">لوحة الإدارة <span id="notificationBadge" class="badge">0</span></a>
 </nav>
 
 <main>
@@ -163,13 +248,15 @@
   <section id="home" class="active">
     <h2>عن السيرفر</h2>
     <p>مرحباً بك في سيرفر اكسار يمكنك التقديم للانضمام إلينا عبر صفحة التقديم</p>
-    
-   
   </section>
 
   <!-- التقديم -->
   <section id="apply">
     <h2>نموذج التقديم</h2>
+    
+    <div class="info-box">
+      <strong>📝 املأ البيانات التالية للتقديم:</strong>
+    </div>
     
     <div class="error-message" id="errorMessage"></div>
     <div class="success-message" id="successMessage"></div>
@@ -204,13 +291,43 @@
       <li>💬 الاحترام واجب للجميع</li>
       <li>⛏️ لا تسرق أو تدمر ممتلكات اللاعبين</li>
       <li>🛡️ اتبع تعليمات الإدارة دائماً</li>
+      <li>🎮 اللعب النظيف والتعاون مع الفريق</li>
+      <li>🚪 عدم دخول ممتلكات الآخرين بدون إذن</li>
+      <li>💎 عدم سرقة الموارد من اللاعبين</li>
+      <li>🔊 استخدام الصوت باحترام في المحادثات</li>
     </ul>
   </section>
 
   <!-- لوحة الإدارة -->
   <section id="admin">
     <h2>لوحة الإدارة - المتقدمون</h2>
-    <button onclick="clearAllApplications()" style="background-color: #dc3545; margin-bottom: 1rem;">مسح جميع الطلبات</button>
+    
+    <!-- أزرار الإدارة -->
+    <div style="margin-bottom: 1rem; display: flex; gap: 5px; flex-wrap: wrap;">
+      <button onclick="exportApplications()" style="background-color: #4caf50;">📥 تصدير البيانات</button>
+      <button onclick="importApplications()" style="background-color: #2196f3;">📤 استيراد البيانات</button>
+      <button onclick="exportToCSV()" style="background-color: #ff9800;">📊 تصدير Excel</button>
+      <button onclick="clearAllApplications()" style="background-color: #dc3545;">🗑️ مسح الكل</button>
+    </div>
+    
+    <!-- الإحصائيات -->
+    <div class="stats-container" id="statsContainer"></div>
+    
+    <!-- البحث والفلترة -->
+    <input type="text" id="searchInput" placeholder="🔍 البحث في الطلبات..." onkeyup="searchApplications()">
+    
+    <div class="filter-badges">
+      <div class="filter-badge active" onclick="filterByAge('all')">الكل</div>
+      <div class="filter-badge" onclick="filterByAge('10-15')">10-15 سنة</div>
+      <div class="filter-badge" onclick="filterByAge('16-20')">16-20 سنة</div>
+      <div class="filter-badge" onclick="filterByAge('21+')">21+ سنة</div>
+    </div>
+    
+    <div class="info-box">
+      <strong>💾 البيانات محفوظة في المتصفح</strong><br>
+      <small>⚠️ البيانات محفوظة في هذا المتصفح فقط. استخدم التصدير للنسخ الاحتياطي.</small>
+    </div>
+    
     <div id="applications"></div>
   </section>
 </main>
@@ -220,11 +337,58 @@
 </footer>
 
 <script>
-// ⚠️ مهم جداً: استبدل هذا برابط Formspree الخاص بك
-const FORMSPREE_ENDPOINT = "https://formspree.io/f/mrbkjnbn"; // مثال: https://formspree.io/f/xyzabc
+// رابط Formspree
+const FORMSPREE_ENDPOINT = "https://formspree.io/f/mrbkjnbn";
 
-// تخزين الطلبات محلياً
+// تخزين الطلبات
 let applicationsData = [];
+let currentFilter = 'all';
+
+// تحميل البيانات المحفوظة عند بدء التطبيق
+function loadSavedApplications() {
+  try {
+    const saved = localStorage.getItem('exarApplications');
+    if (saved) {
+      applicationsData = JSON.parse(saved);
+      console.log(`تم تحميل ${applicationsData.length} طلب محفوظ`);
+    }
+  } catch (error) {
+    console.error('خطأ في تحميل البيانات المحفوظة:', error);
+    applicationsData = [];
+  }
+}
+
+// حفظ البيانات في localStorage
+function saveApplications() {
+  try {
+    localStorage.setItem('exarApplications', JSON.stringify(applicationsData));
+    console.log('تم حفظ البيانات بنجاح');
+    updateNotificationBadge();
+  } catch (error) {
+    console.error('خطأ في حفظ البيانات:', error);
+  }
+}
+
+// تحديث شارة التنبيهات
+function updateNotificationBadge() {
+  const badge = document.getElementById('notificationBadge');
+  const lastVisit = localStorage.getItem('lastAdminVisit');
+  let newCount = 0;
+  
+  if (lastVisit) {
+    const lastVisitDate = new Date(lastVisit);
+    newCount = applicationsData.filter(app => new Date(app.date) > lastVisitDate).length;
+  } else {
+    newCount = applicationsData.length;
+  }
+  
+  if (newCount > 0) {
+    badge.textContent = newCount;
+    badge.style.display = 'inline-block';
+  } else {
+    badge.style.display = 'none';
+  }
+}
 
 // دوال عامة
 window.showSection = function(id) {
@@ -258,13 +422,6 @@ window.showSuccess = function(message) {
 document.getElementById('applyForm').addEventListener('submit', async function(e) {
   e.preventDefault();
   
-  // التحقق من رابط Formspree
-  if (FORMSPREE_ENDPOINT === "YOUR_FORMSPREE_ENDPOINT") {
-    showError("⚠️ يرجى إضافة رابط Formspree الخاص بك في الكود!");
-    console.error("يجب استبدال YOUR_FORMSPREE_ENDPOINT برابط Formspree الحقيقي");
-    return;
-  }
-  
   // إظهار مؤشر التحميل
   document.getElementById('loader').style.display = 'block';
   document.getElementById('submitBtn').disabled = true;
@@ -277,14 +434,18 @@ document.getElementById('applyForm').addEventListener('submit', async function(e
     age: document.getElementById('age').value.trim(),
     reason: document.getElementById('reason').value.trim(),
     _subject: `طلب انضمام جديد من ${document.getElementById('ign').value}`,
-    date: new Date().toLocaleString('ar-SA')
+    date: new Date().toLocaleString('ar-SA'),
+    status: 'جديد',
+    notes: ''
   };
   
   // حفظ البيانات محلياً
   applicationsData.push({
     ...formData,
-    date: new Date().toLocaleString('ar-SA')
+    id: Date.now() // معرف فريد
   });
+  
+  saveApplications();
   
   try {
     // إرسال البيانات إلى Formspree
@@ -323,61 +484,245 @@ window.adminAccess = function() {
   const pass = prompt("ادخل كلمة المرور");
   if (pass === "exar3321") {
     showSection("admin");
+    updateStats();
     loadApplications();
+    
+    // حفظ تاريخ آخر زيارة
+    localStorage.setItem('lastAdminVisit', new Date().toISOString());
+    
+    // إظهار رسالة ترحيب
+    if (applicationsData.length > 0) {
+      const newCount = document.getElementById('notificationBadge').textContent;
+      if (newCount && newCount !== '0') {
+        showSuccess(`مرحباً! لديك ${newCount} طلب جديد.`);
+      }
+    }
+    
+    // إخفاء شارة التنبيهات
+    document.getElementById('notificationBadge').style.display = 'none';
   } else {
     alert("كلمة المرور خاطئة");
   }
 }
 
-// دالة تحميل الطلبات
-window.loadApplications = function() {
+// دالة تحديث الإحصائيات
+function updateStats() {
+  const container = document.getElementById('statsContainer');
+  const today = new Date().toDateString();
+  const todayApps = applicationsData.filter(app => new Date(app.date).toDateString() === today).length;
+  const avgAge = applicationsData.length > 0 
+    ? Math.round(applicationsData.reduce((sum, app) => sum + parseInt(app.age), 0) / applicationsData.length)
+    : 0;
+  
+  container.innerHTML = `
+    <div class="stat-card">
+      <div class="stat-number">${applicationsData.length}</div>
+      <div class="stat-label">إجمالي الطلبات</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-number">${todayApps}</div>
+      <div class="stat-label">طلبات اليوم</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-number">${avgAge}</div>
+      <div class="stat-label">متوسط العمر</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-number">${applicationsData.filter(app => app.notes).length}</div>
+      <div class="stat-label">طلبات بملاحظات</div>
+    </div>
+  `;
+}
+
+// دالة البحث في الطلبات
+window.searchApplications = function() {
+  const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+  const filteredApps = applicationsData.filter(app => {
+    return app.ign.toLowerCase().includes(searchTerm) ||
+           app.discord.toLowerCase().includes(searchTerm) ||
+           app.email.toLowerCase().includes(searchTerm) ||
+           app.reason.toLowerCase().includes(searchTerm) ||
+           app.age.toString().includes(searchTerm);
+  });
+  
+  displayApplications(filteredApps);
+}
+
+// دالة الفلترة حسب العمر
+window.filterByAge = function(filter) {
+  currentFilter = filter;
+  
+  // تحديث الأزرار النشطة
+  document.querySelectorAll('.filter-badge').forEach(badge => {
+    badge.classList.remove('active');
+  });
+  event.target.classList.add('active');
+  
+  let filteredApps = applicationsData;
+  
+  if (filter === '10-15') {
+    filteredApps = applicationsData.filter(app => app.age >= 10 && app.age <= 15);
+  } else if (filter === '16-20') {
+    filteredApps = applicationsData.filter(app => app.age >= 16 && app.age <= 20);
+  } else if (filter === '21+') {
+    filteredApps = applicationsData.filter(app => app.age >= 21);
+  }
+  
+  displayApplications(filteredApps);
+}
+
+// دالة عرض الطلبات
+function displayApplications(apps) {
   const container = document.getElementById("applications");
   container.innerHTML = "";
 
-  if (applicationsData.length === 0) {
-    container.innerHTML = "<p>لا يوجد متقدمين حالياً.</p>";
+  if (apps.length === 0) {
+    container.innerHTML = "<p>لا توجد نتائج.</p>";
     return;
   }
 
-  applicationsData.forEach((app, index) => {
+  apps.forEach((app, displayIndex) => {
+    const actualIndex = applicationsData.indexOf(app);
     const card = document.createElement("div");
     card.className = "application-card";
     card.innerHTML = `
+      <div class="card-header">
+        طلب #${actualIndex + 1} - ${app.date}
+        ${app.status === 'جديد' ? '<span style="color: green; float: left;">● جديد</span>' : ''}
+      </div>
       <strong>الاسم داخل اللعبة:</strong> ${app.ign}<br>
       <strong>العمر:</strong> ${app.age}<br>
       <strong>ديسكورد:</strong> ${app.discord}<br>
       <strong>البريد الإلكتروني:</strong> ${app.email}<br>
       <strong>السبب:</strong> ${app.reason}<br>
-      <strong>التاريخ:</strong> ${app.date || 'غير محدد'}<br>
-      <button onclick="removeApplication(${index})" style="background-color: #dc3545; margin-top: 10px;">حذف</button>
+      ${app.notes ? `<div class="admin-note"><strong>ملاحظات الإدارة:</strong> ${app.notes}</div>` : ''}
+      <div class="action-buttons">
+        <button onclick="addNote(${actualIndex})" style="background-color: #2196f3;">📝 ملاحظة</button>
+        <button onclick="markAsRead(${actualIndex})" style="background-color: #4caf50;">✓ تم القراءة</button>
+        <button onclick="removeApplication(${actualIndex})" style="background-color: #dc3545;">حذف</button>
+      </div>
     `;
     container.appendChild(card);
   });
+}
+
+// دالة تحميل الطلبات
+window.loadApplications = function() {
+  displayApplications(applicationsData);
+}
+
+// دالة إضافة ملاحظة
+window.addNote = function(index) {
+  const note = prompt("أضف ملاحظة لهذا الطلب:", applicationsData[index].notes || "");
+  if (note !== null) {
+    applicationsData[index].notes = note.trim();
+    saveApplications();
+    loadApplications();
+    if (note.trim()) {
+      showSuccess("تم إضافة الملاحظة بنجاح!");
+    }
+  }
+}
+
+// دالة تحديد كمقروء
+window.markAsRead = function(index) {
+  applicationsData[index].status = 'مقروء';
+  saveApplications();
+  loadApplications();
 }
 
 // دالة حذف طلب
 window.removeApplication = function(index) {
   if (confirm("هل أنت متأكد من حذف هذا الطلب؟")) {
     applicationsData.splice(index, 1);
+    saveApplications();
     loadApplications();
+    updateStats();
   }
 }
 
 // دالة مسح جميع الطلبات
 window.clearAllApplications = function() {
-  if (confirm("هل أنت متأكد من حذف جميع الطلبات؟")) {
-    applicationsData = [];
-    loadApplications();
+  if (confirm("هل أنت متأكد من حذف جميع الطلبات؟ هذا الإجراء لا يمكن التراجع عنه!")) {
+    if (confirm("تأكيد نهائي: سيتم حذف " + applicationsData.length + " طلب نهائياً!")) {
+      applicationsData = [];
+      saveApplications();
+      loadApplications();
+      updateStats();
+      showSuccess("تم حذف جميع الطلبات!");
+    }
   }
 }
 
-// تحذير إذا لم يتم تغيير رابط Formspree
+// دالة تصدير البيانات
+window.exportApplications = function() {
+  const dataStr = JSON.stringify(applicationsData, null, 2);
+  const dataBlob = new Blob([dataStr], {type: 'application/json'});
+  const link = document.createElement('a');
+  link.href = URL.createObjectURL(dataBlob);
+  link.download = `exar_applications_${new Date().toISOString().split('T')[0]}.json`;
+  link.click();
+  showSuccess("تم تصدير البيانات بنجاح!");
+}
+
+// دالة استيراد البيانات
+window.importApplications = function() {
+  const input = document.createElement('input');
+  input.type = 'file';
+  input.accept = '.json';
+  input.onchange = function(e) {
+    const file = e.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = function(event) {
+        try {
+          const imported = JSON.parse(event.target.result);
+          if (Array.isArray(imported)) {
+            if (confirm(`هل تريد استيراد ${imported.length} طلب؟ سيتم دمجها مع الطلبات الحالية.`)) {
+              applicationsData = [...applicationsData, ...imported];
+              saveApplications();
+              loadApplications();
+              updateStats();
+              showSuccess(`تم استيراد ${imported.length} طلب بنجاح!`);
+            }
+          } else {
+            showError('الملف غير صالح. يجب أن يكون ملف JSON يحتوي على مصفوفة.');
+          }
+        } catch (error) {
+          showError('خطأ في قراءة الملف: ' + error.message);
+        }
+      };
+      reader.readAsText(file);
+    }
+  };
+  input.click();
+}
+
+// دالة تصدير إلى CSV/Excel
+window.exportToCSV = function() {
+  let csv = '\ufeff'; // BOM for UTF-8
+  csv += 'الاسم,العمر,ديسكورد,البريد الإلكتروني,السبب,التاريخ,الملاحظات\n';
+  
+  applicationsData.forEach(app => {
+    csv += `"${app.ign}","${app.age}","${app.discord}","${app.email}","${app.reason}","${app.date}","${app.notes || ''}"\n`;
+  });
+  
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const link = document.createElement('a');
+  link.href = URL.createObjectURL(blob);
+  link.download = `exar_applications_${new Date().toISOString().split('T')[0]}.csv`;
+  link.click();
+  showSuccess("تم تصدير البيانات إلى Excel بنجاح!");
+}
+
+// تحميل البيانات عند بدء التطبيق
 window.addEventListener('DOMContentLoaded', function() {
+  loadSavedApplications();
+  updateNotificationBadge();
+  
+  // تحذير إذا لم يتم تغيير رابط Formspree
   if (FORMSPREE_ENDPOINT === "YOUR_FORMSPREE_ENDPOINT") {
     console.warn("⚠️ تحذير: يجب استبدال YOUR_FORMSPREE_ENDPOINT برابط Formspree الحقيقي!");
-    console.log("1. اذهب إلى https://formspree.io");
-    console.log("2. أنشئ حساب وانشئ نموذج جديد");
-    console.log("3. انسخ الرابط والصقه في الكود");
   }
 });
 </script>
