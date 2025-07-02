@@ -12,6 +12,13 @@
       margin: 0;
       background-color: #f2f2f2;
       color: #333;
+    .warning-box {
+      background: #ffebee; 
+      padding: 10px; 
+      border-radius: 5px; 
+      border: 1px solid #f44336;
+      margin-top: 10px;
+    }
     pre {
       background: #f8f9fa; 
       padding: 10px; 
@@ -171,7 +178,19 @@ Reason: {{reason}}
 Message:
 {{message}}
 
-Date: {{date}}</pre>
+      <h4>حل سريع للخطأ 412:</h4>
+      <p style="background: #e8f5e9; padding: 10px; border-radius: 5px;">
+        إذا استمر الخطأ 412، استخدم هذا القالب البسيط في EmailJS:<br>
+        <code style="display: block; margin-top: 10px;">{{message}}</code><br>
+        هذا سيرسل كل المعلومات في رسالة واحدة.
+      </p>
+      
+      <div class="warning-box">
+        <strong>⚠️ تحذير مهم: لا تستخدم معلومات ديسكورد في حقول البريد!</strong><br>
+        في إعدادات القالب في EmailJS:<br>
+        ❌ لا تضع {{discord}} في Reply-To أو CC<br>
+        ✅ استخدم بريد إلكتروني حقيقي أو اتركه فارغاً
+      </div>
     </div>
   </section>
 
@@ -187,6 +206,8 @@ Date: {{date}}</pre>
       <input type="text" id="ign" required />
       <label>حسابك في ديسكورد:</label>
       <input type="text" id="discord" placeholder="مثال: name#1234" required />
+      <label>البريد الإلكتروني (اختياري):</label>
+      <input type="email" id="userEmail" placeholder="your@email.com" />
       <label>العمر:</label>
       <input type="number" id="age" min="10" max="100" required />
       <label>لماذا تريد الانضمام؟</label>
@@ -307,13 +328,15 @@ function handleFormSubmit(e) {
   const age = document.getElementById("age").value.trim();
   const discord = document.getElementById("discord").value.trim();
   const reason = document.getElementById("reason").value.trim();
+  const userEmail = document.getElementById("userEmail").value.trim() || "noreply@exarserver.com";
 
   // حفظ البيانات محلياً
   const newApplication = { 
     ign, 
     age, 
     discord, 
-    reason, 
+    reason,
+    email: userEmail,
     date: new Date().toLocaleString('ar-SA') 
   };
   
@@ -323,27 +346,27 @@ function handleFormSubmit(e) {
   const templateParams = {
     // حقول EmailJS الافتراضية
     from_name: ign,
-    from_email: discord, // بعض القوالب تحتاج from_email
-    to_name: "Admin", // بعض القوالب تحتاج to_name
+    from_email: userEmail, // استخدام البريد الإلكتروني المدخل أو الافتراضي
+    to_name: "Admin",
     to_email: YOUR_EMAIL,
-    reply_to: discord,
+    reply_to: userEmail, // للرد على البريد الصحيح
     
     // حقول مخصصة للبيانات
-    user_name: ign, // حقل بديل للاسم
-    name: ign, // حقل بديل آخر
+    user_name: ign,
+    name: ign,
     ign: ign,
     age: age,
-    discord: discord,
+    discord: discord, // حفظ معلومات ديسكورد كنص عادي
     reason: reason,
     date: new Date().toLocaleString('ar-SA'),
     
     // حقول الرسالة
     subject: `طلب انضمام جديد من ${ign}`,
-    message: `طلب انضمام جديد لسيرفر Exar\n\nالاسم داخل اللعبة: ${ign}\nالعمر: ${age}\nحساب ديسكورد: ${discord}\nسبب الانضمام: ${reason}\n\nالتاريخ: ${new Date().toLocaleString('ar-SA')}`,
+    message: `طلب انضمام جديد لسيرفر Exar\n\nالاسم داخل اللعبة: ${ign}\nالعمر: ${age}\nحساب ديسكورد: ${discord}\nالبريد الإلكتروني: ${userEmail}\nسبب الانضمام: ${reason}\n\nالتاريخ: ${new Date().toLocaleString('ar-SA')}`,
     
-    // حقول إضافية قد تكون مطلوبة
-    email: discord, // بعض القوالب تحتاج حقل email
-    phone: "غير متوفر", // إذا كان القالب يحتاج رقم هاتف
+    // حقول إضافية
+    email: userEmail, // البريد الإلكتروني المدخل
+    phone: "غير متوفر"
   };
 
   console.log("إرسال البيانات:", templateParams);
@@ -421,6 +444,7 @@ window.loadApplications = function() {
       <strong>الاسم داخل اللعبة:</strong> ${app.ign}<br>
       <strong>العمر:</strong> ${app.age}<br>
       <strong>ديسكورد:</strong> ${app.discord}<br>
+      <strong>البريد الإلكتروني:</strong> ${app.email || 'غير محدد'}<br>
       <strong>السبب:</strong> ${app.reason}<br>
       <strong>التاريخ:</strong> ${app.date || 'غير محدد'}<br>
       <button onclick="removeApplication(${index})" style="background-color: #dc3545; margin-top: 10px;">حذف</button>
@@ -473,6 +497,7 @@ EmailJS جاهز: ${emailjsReady ? 'نعم' : 'لا'}
 - message (الرسالة)
 - email (البريد)
 - phone (الهاتف)
+- userEmail (البريد المدخل من المستخدم)
 
 نصائح:
 1. تأكد من أن القالب في EmailJS يستخدم المتغيرات بالشكل {{variable_name}}
@@ -496,26 +521,26 @@ window.testEmailJS = function() {
   const testParams = {
     // حقول EmailJS الافتراضية
     from_name: "اختبار",
-    from_email: "test@test.com",
+    from_email: "noreply@exarserver.com",
     to_name: "Admin",
     to_email: YOUR_EMAIL,
-    reply_to: "test@test.com",
+    reply_to: "noreply@exarserver.com",
     
     // حقول مخصصة
     user_name: "اختبار",
     name: "اختبار",
     ign: "اختبار",
     age: "18",
-    discord: "test#1234",
+    discord: "test#1234", // معلومات ديسكورد كنص
     reason: "هذه رسالة اختبار للتأكد من عمل النظام",
     date: new Date().toLocaleString('ar-SA'),
     
     // حقول الرسالة
     subject: "رسالة اختبار من موقع Exar",
-    message: "هذه رسالة اختبار للتأكد من أن EmailJS يعمل بشكل صحيح",
+    message: "هذه رسالة اختبار للتأكد من أن EmailJS يعمل بشكل صحيح\n\nديسكورد: test#1234",
     
     // حقول إضافية
-    email: "test@test.com",
+    email: "noreply@exarserver.com",
     phone: "غير متوفر"
   };
 
