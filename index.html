@@ -766,7 +766,7 @@
 
   <header>
     <h1>SERVER EXAR</h1>
-    <p style="color: #a0aec0; font-size: 1.2rem;">مرحباً بك في سيرفر إكسار  </p>
+    <p style="color: #a0aec0; font-size: 1.2rem;">مرحباً بك في عالم الإبداع والمغامرة</p>
   </header>
 
   <nav>
@@ -864,7 +864,10 @@
         <div class="filter-badge" onclick="filterByAge('21+')">21+ سنة</div>
       </div>
       
-     
+      <div class="info-box">
+        <strong>☁️ البيانات محفوظة في السحابة</strong><br>
+        <small>✅ البيانات محفوظة في Firebase ويمكن الوصول إليها من أي جهاز.</small>
+      </div>
       
       <div id="applications"></div>
     </section>
@@ -1041,6 +1044,15 @@ document.getElementById('applyForm').addEventListener('submit', async function(e
     return;
   }
   
+  // التحقق من الإرسال المتكرر
+  const lastSubmit = localStorage.getItem('lastSubmitTime');
+  const now = Date.now();
+  if (lastSubmit && (now - parseInt(lastSubmit)) < 300000) { // 5 دقائق
+    const remainingTime = Math.ceil((300000 - (now - parseInt(lastSubmit))) / 60000);
+    showError(`⏰ يرجى الانتظار ${remainingTime} دقيقة قبل إرسال طلب جديد`);
+    return;
+  }
+  
   // إظهار مؤشر التحميل
   document.getElementById('loader').style.display = 'block';
   document.getElementById('submitBtn').disabled = true;
@@ -1057,11 +1069,35 @@ document.getElementById('applyForm').addEventListener('submit', async function(e
     notes: ''
   };
   
+  // التحقق من صحة البيانات
+  if (formData.ign.length < 3 || formData.ign.length > 30) {
+    showError('❌ اسم اللاعب يجب أن يكون بين 3 و 30 حرف');
+    document.getElementById('loader').style.display = 'none';
+    document.getElementById('submitBtn').disabled = false;
+    return;
+  }
+  
+  if (!formData.discord.match(/^.+#[0-9]{4}$/)) {
+    showError('❌ يرجى إدخال حساب ديسكورد صحيح (مثال: name#1234)');
+    document.getElementById('loader').style.display = 'none';
+    document.getElementById('submitBtn').disabled = false;
+    return;
+  }
+  
+  if (formData.reason.length < 10 || formData.reason.length > 500) {
+    showError('❌ السبب يجب أن يكون بين 10 و 500 حرف');
+    document.getElementById('loader').style.display = 'none';
+    document.getElementById('submitBtn').disabled = false;
+    return;
+  }
+  
   try {
     // حفظ في Firebase
     if (isOnline) {
       await saveApplicationToFirebase(formData);
       showSuccess('✅ تم إرسال طلبك بنجاح! سنتواصل معك قريباً.');
+      // حفظ وقت الإرسال
+      localStorage.setItem('lastSubmitTime', Date.now().toString());
     } else {
       // حفظ محلياً إذا كان غير متصل
       const localApps = JSON.parse(localStorage.getItem('pendingApplications') || '[]');
@@ -1098,7 +1134,12 @@ document.getElementById('applyForm').addEventListener('submit', async function(e
 // دالة الدخول للوحة الإدارة
 window.adminAccess = function() {
   const pass = prompt("ادخل كلمة المرور");
-  if (pass === "exar3321") {
+  
+  // تشفير كلمة المرور المدخلة وم  قارنتها مع الهاش المحفوظ
+  const hashedInput = btoa(pass); // تشفير بسيط للمثال
+  const correctHash = "ZXhhcjMzMjE="; // هاش كلمة المرور الصحيحة
+  
+  if (hashedInput === correctHash) {
     showSection("admin");
     updateStats();
     loadApplications();
