@@ -946,7 +946,7 @@
         <input type="text" name="ign" id="ign" required />
         
         <label>حسابك في ديسكورد:</label>
-        <input type="text" name="discord" id="discord" placeholder="مثال: name#1234" required />
+        <input type="text" name="discord" id="discord" placeholder="مثال: username أو username#1234" required />
         
         <label>البريد الإلكتروني:</label>
         <input type="email" name="email" id="email" placeholder="your@email.com" />
@@ -1431,8 +1431,12 @@ document.getElementById('applyForm').addEventListener('submit', async function(e
     return;
   }
   
-  if (!formData.discord.match(/^.+#[0-9]{4}$/)) {
-    showError('❌ يرجى إدخال حساب ديسكورد صحيح (مثال: name#1234)');
+  // التحقق من حساب Discord (التنسيق الجديد أو القديم)
+  const discordOldFormat = /^.+#[0-9]{4}$/; // التنسيق القديم: username#1234
+  const discordNewFormat = /^[a-zA-Z0-9._]{2,32}$/; // التنسيق الجديد: username فقط
+  
+  if (!formData.discord.match(discordOldFormat) && !formData.discord.match(discordNewFormat)) {
+    showError('❌ يرجى إدخال حساب ديسكورد صحيح (مثال: username أو username#1234)');
     document.getElementById('loader').style.display = 'none';
     document.getElementById('submitBtn').disabled = false;
     return;
