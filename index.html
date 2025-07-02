@@ -18,7 +18,7 @@
     const firebaseConfig = {
       apiKey: "AIzaSyB-il2jFPjrro4yYB-mGOZDNXGofOzzk1Q",
       authDomain: "severexar.firebaseapp.com",
-      databaseURL: "https://severexar-default-rtdb.firebaseio.com", // أضف هذا السطر بعد تفعيل Realtime Database
+      databaseURL: "https://severexar-default-rtdb.europe-west1.firebasedatabase.app",
       projectId: "severexar",
       storageBucket: "severexar.firebasestorage.app",
       messagingSenderId: "273479278732",
@@ -1300,6 +1300,38 @@ window.syncWithFirebase = async function() {
     showSuccess("البيانات محدثة بالفعل!");
   }
 }
+
+// دالة تصدير البيانات
+window.exportApplications = function() {
+  const dataStr = JSON.stringify(applicationsData, null, 2);
+  const dataBlob = new Blob([dataStr], {type: 'application/json'});
+  const link = document.createElement('a');
+  link.href = URL.createObjectURL(dataBlob);
+  link.download = `exar_applications_${new Date().toISOString().split('T')[0]}.json`;
+  link.click();
+  showSuccess("تم تصدير البيانات بنجاح!");
+}
+
+// دالة تصدير إلى CSV/Excel
+window.exportToCSV = function() {
+  let csv = '\ufeff';
+  csv += 'الاسم,العمر,ديسكورد,البريد الإلكتروني,السبب,التاريخ,الملاحظات\n';
+  
+  applicationsData.forEach(app => {
+    csv += `"${app.ign}","${app.age}","${app.discord}","${app.email}","${app.reason}","${app.date}","${app.notes || ''}"\n`;
+  });
+  
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const link = document.createElement('a');
+  link.href = URL.createObjectURL(blob);
+  link.download = `exar_applications_${new Date().toISOString().split('T')[0]}.csv`;
+  link.click();
+  showSuccess("تم تصدير البيانات إلى Excel بنجاح!");
+}
 </script>
+</body>
+</html>
+</body>
+</html>
 </body>
 </html>
