@@ -13,6 +13,7 @@
     // Import Firebase functions
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-app.js";
     import { getDatabase, ref, push, set, onValue, remove, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-database.js";
+    import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-auth.js";
     
     // Your Firebase configuration
     const firebaseConfig = {
@@ -29,6 +30,7 @@
     // Initialize Firebase
     const app = initializeApp(firebaseConfig);
     const database = getDatabase(app);
+    const auth = getAuth(app);
     
     // Export functions globally
     window.firebaseDB = {
@@ -38,7 +40,12 @@
       set,
       onValue,
       remove,
-      serverTimestamp
+      serverTimestamp,
+      auth,
+      signInWithEmailAndPassword,
+      createUserWithEmailAndPassword,
+      signOut,
+      onAuthStateChanged
     };
   </script>
   
@@ -692,6 +699,117 @@
       animation: none;
     }
     
+    /* Auth Modal */
+    .auth-modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.8);
+      z-index: 2000;
+      align-items: center;
+      justify-content: center;
+      backdrop-filter: blur(5px);
+    }
+    
+    .auth-modal.active {
+      display: flex;
+    }
+    
+    .auth-content {
+      background: rgba(26, 26, 46, 0.95);
+      padding: 2.5rem;
+      border-radius: 20px;
+      max-width: 400px;
+      width: 90%;
+      border: 1px solid rgba(102, 126, 234, 0.3);
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+      animation: modalFadeIn 0.3s ease;
+    }
+    
+    @keyframes modalFadeIn {
+      from {
+        opacity: 0;
+        transform: scale(0.9);
+      }
+      to {
+        opacity: 1;
+        transform: scale(1);
+      }
+    }
+    
+    .auth-header {
+      text-align: center;
+      margin-bottom: 2rem;
+    }
+    
+    .auth-header h3 {
+      font-size: 2rem;
+      background: var(--gradient);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-bottom: 0.5rem;
+    }
+    
+    .auth-form input {
+      width: 100%;
+      margin-bottom: 1rem;
+    }
+    
+    .auth-buttons {
+      display: flex;
+      gap: 1rem;
+      margin-top: 1.5rem;
+    }
+    
+    .auth-buttons button {
+      flex: 1;
+    }
+    
+    .close-modal {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      background: transparent;
+      border: none;
+      color: #a0aec0;
+      font-size: 2rem;
+      cursor: pointer;
+      padding: 0;
+      width: 40px;
+      height: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 50%;
+      transition: all 0.3s ease;
+    }
+    
+    .close-modal:hover {
+      background: rgba(102, 126, 234, 0.2);
+      color: white;
+    }
+    
+    /* Admin Panel Info */
+    .admin-info {
+      background: rgba(102, 126, 234, 0.1);
+      border: 1px solid rgba(102, 126, 234, 0.3);
+      border-radius: 10px;
+      padding: 1rem;
+      margin-bottom: 1.5rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    
+    .admin-info button {
+      padding: 0.5rem 1rem;
+      font-size: 0.9rem;
+      background: linear-gradient(135deg, #f56565 0%, #e53e3e 100%);
+    }
+    
     /* Footer */
     footer {
       background: rgba(15, 15, 30, 0.95);
@@ -733,6 +851,10 @@
         padding: 0.6rem 1rem;
         font-size: 0.9rem;
       }
+      
+      .auth-content {
+        padding: 2rem;
+      }
     }
     
     /* Custom Scrollbar */
@@ -751,6 +873,18 @@
     
     ::-webkit-scrollbar-thumb:hover {
       background: var(--primary-dark);
+    }
+    
+    /* Rate Limit Warning */
+    .rate-limit-warning {
+      background: rgba(237, 137, 54, 0.1);
+      border: 1px solid rgba(237, 137, 54, 0.3);
+      color: #f6ad55;
+      padding: 1rem;
+      border-radius: 10px;
+      margin-bottom: 1rem;
+      text-align: center;
+      display: none;
     }
   </style>
 </head>
@@ -773,7 +907,7 @@
     <a onclick="showSection('home')"><span>الرئيسية</span></a>
     <a onclick="showSection('apply')"><span>التقديم</span></a>
     <a onclick="showSection('rules')"><span>القوانين</span></a>
-    <a onclick="adminAccess()" style="position: relative;">
+    <a onclick="showAdminPanel()" style="position: relative;">
       <span>لوحة الإدارة</span>
       <span id="notificationBadge" class="badge" style="display: none;">0</span>
     </a>
@@ -800,6 +934,10 @@
         <strong>📝 املأ البيانات التالية للتقديم:</strong>
       </div>
       
+      <div class="rate-limit-warning" id="rateLimitWarning">
+        ⚠️ تم الوصول إلى الحد الأقصى للطلبات. حاول مرة أخرى بعد قليل.
+      </div>
+      
       <div class="error-message alert" id="errorMessage"></div>
       <div class="success-message alert" id="successMessage"></div>
       
@@ -818,6 +956,12 @@
         
         <label>لماذا تريد الانضمام؟</label>
         <textarea name="reason" id="reason" rows="4" required></textarea>
+        
+        <!-- CAPTCHA بسيط -->
+        <div style="margin-bottom: 1rem;">
+          <label>حل المسألة: <span id="captchaQuestion"></span></label>
+          <input type="number" id="captchaAnswer" required />
+        </div>
         
         <button type="submit" id="submitBtn">إرسال الطلب</button>
         <div class="loader" id="loader"></div>
@@ -842,6 +986,14 @@
     <!-- لوحة الإدارة -->
     <section id="admin">
       <h2>لوحة الإدارة - المتقدمون</h2>
+      
+      <!-- معلومات المسؤول -->
+      <div class="admin-info" id="adminInfo" style="display: none;">
+        <div>
+          <strong>مسجل الدخول كـ:</strong> <span id="adminEmail"></span>
+        </div>
+        <button onclick="logout()">تسجيل الخروج</button>
+      </div>
       
       <!-- أزرار الإدارة -->
       <div style="margin-bottom: 2rem; display: flex; gap: 0.5rem; flex-wrap: wrap;">
@@ -873,6 +1025,40 @@
     </section>
   </main>
 
+  <!-- نافذة تسجيل الدخول -->
+  <div class="auth-modal" id="authModal">
+    <div class="auth-content">
+      <button class="close-modal" onclick="closeAuthModal()">×</button>
+      <div class="auth-header">
+        <h3>تسجيل الدخول للإدارة</h3>
+        <p style="color: #a0aec0;">أدخل بيانات حساب المسؤول</p>
+      </div>
+      
+      <div class="error-message alert" id="authError"></div>
+      
+      <form class="auth-form" id="authForm">
+        <input type="email" id="authEmail" placeholder="البريد الإلكتروني" required />
+        <input type="password" id="authPassword" placeholder="كلمة المرور" required />
+        
+        <div class="auth-buttons">
+          <button type="submit" id="loginBtn">تسجيل الدخول</button>
+          <button type="button" onclick="showRegisterForm()" style="background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);">حساب جديد</button>
+        </div>
+      </form>
+      
+      <form class="auth-form" id="registerForm" style="display: none;">
+        <input type="email" id="regEmail" placeholder="البريد الإلكتروني" required />
+        <input type="password" id="regPassword" placeholder="كلمة المرور (6 أحرف على الأقل)" required />
+        <input type="password" id="regPasswordConfirm" placeholder="تأكيد كلمة المرور" required />
+        
+        <div class="auth-buttons">
+          <button type="submit" id="registerBtn">إنشاء حساب</button>
+          <button type="button" onclick="showLoginForm()" style="background: linear-gradient(135deg, #718096 0%, #4a5568 100%);">رجوع</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
   <!-- مؤشر حالة الاتصال -->
   <div class="connection-status">
     <span class="status-indicator" id="statusIndicator"></span>
@@ -903,6 +1089,15 @@ let applicationsData = [];
 let currentFilter = 'all';
 let isOnline = navigator.onLine;
 let database, dbRef, dbPush, dbSet, dbOnValue, dbRemove, serverTimestamp;
+let auth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged;
+let currentUser = null;
+let captchaCorrect = false;
+let captchaValue = 0;
+
+// Rate limiting
+let submitAttempts = 0;
+let lastSubmitTime = 0;
+const MAX_ATTEMPTS_PER_HOUR = 10;
 
 // تهيئة التطبيق
 function initializeApp() {
@@ -915,12 +1110,38 @@ function initializeApp() {
   dbOnValue = fb.onValue;
   dbRemove = fb.remove;
   serverTimestamp = fb.serverTimestamp;
+  auth = fb.auth;
+  signInWithEmailAndPassword = fb.signInWithEmailAndPassword;
+  createUserWithEmailAndPassword = fb.createUserWithEmailAndPassword;
+  signOut = fb.signOut;
+  onAuthStateChanged = fb.onAuthStateChanged;
+  
+  // إعداد CAPTCHA
+  generateCaptcha();
+  
+  // مراقبة حالة المصادقة
+  onAuthStateChanged(auth, (user) => {
+    currentUser = user;
+    if (user && document.getElementById('admin').classList.contains('active')) {
+      showAdminInfo(user);
+      loadApplications();
+      updateStats();
+    }
+  });
   
   // بدء الاستماع للتغييرات
   listenToFirebaseChanges();
   updateConnectionStatus();
   updateNotificationBadge();
   syncWithFirebase();
+}
+
+// توليد CAPTCHA
+function generateCaptcha() {
+  const num1 = Math.floor(Math.random() * 10) + 1;
+  const num2 = Math.floor(Math.random() * 10) + 1;
+  captchaValue = num1 + num2;
+  document.getElementById('captchaQuestion').textContent = `${num1} + ${num2} = ؟`;
 }
 
 // مراقبة حالة الاتصال
@@ -961,7 +1182,7 @@ function listenToFirebaseChanges() {
         id: key
       }));
       updateNotificationBadge();
-      if (document.getElementById('admin').classList.contains('active')) {
+      if (currentUser && document.getElementById('admin').classList.contains('active')) {
         loadApplications();
         updateStats();
       }
@@ -1012,8 +1233,8 @@ window.showSection = function(id) {
   document.getElementById(id).classList.add("active");
 }
 
-window.showError = function(message) {
-  const errorDiv = document.getElementById('errorMessage');
+window.showError = function(message, elementId = 'errorMessage') {
+  const errorDiv = document.getElementById(elementId);
   if (errorDiv) {
     errorDiv.textContent = message;
     errorDiv.style.display = 'block';
@@ -1034,9 +1255,142 @@ window.showSuccess = function(message) {
   }
 }
 
+// عرض لوحة الإدارة
+window.showAdminPanel = function() {
+  if (!currentUser) {
+    document.getElementById('authModal').classList.add('active');
+  } else {
+    showSection('admin');
+    loadApplications();
+    updateStats();
+    showAdminInfo(currentUser);
+    localStorage.setItem('lastAdminVisit', new Date().toISOString());
+    document.getElementById('notificationBadge').style.display = 'none';
+  }
+}
+
+// عرض معلومات المسؤول
+function showAdminInfo(user) {
+  document.getElementById('adminInfo').style.display = 'flex';
+  document.getElementById('adminEmail').textContent = user.email;
+}
+
+// إغلاق نافذة المصادقة
+window.closeAuthModal = function() {
+  document.getElementById('authModal').classList.remove('active');
+  document.getElementById('authError').style.display = 'none';
+}
+
+// عرض نموذج التسجيل
+window.showRegisterForm = function() {
+  document.getElementById('authForm').style.display = 'none';
+  document.getElementById('registerForm').style.display = 'block';
+}
+
+// عرض نموذج تسجيل الدخول
+window.showLoginForm = function() {
+  document.getElementById('registerForm').style.display = 'none';
+  document.getElementById('authForm').style.display = 'block';
+}
+
+// معالج تسجيل الدخول
+document.getElementById('authForm').addEventListener('submit', async function(e) {
+  e.preventDefault();
+  
+  const email = document.getElementById('authEmail').value.trim();
+  const password = document.getElementById('authPassword').value;
+  
+  document.getElementById('loginBtn').disabled = true;
+  
+  try {
+    await signInWithEmailAndPassword(auth, email, password);
+    closeAuthModal();
+    showSection('admin');
+    showSuccess('تم تسجيل الدخول بنجاح!');
+  } catch (error) {
+    console.error('خطأ في تسجيل الدخول:', error);
+    showError('خطأ في البريد الإلكتروني أو كلمة المرور', 'authError');
+  } finally {
+    document.getElementById('loginBtn').disabled = false;
+  }
+});
+
+// معالج إنشاء حساب جديد
+document.getElementById('registerForm').addEventListener('submit', async function(e) {
+  e.preventDefault();
+  
+  const email = document.getElementById('regEmail').value.trim();
+  const password = document.getElementById('regPassword').value;
+  const confirmPassword = document.getElementById('regPasswordConfirm').value;
+  
+  if (password !== confirmPassword) {
+    showError('كلمات المرور غير متطابقة', 'authError');
+    return;
+  }
+  
+  if (password.length < 6) {
+    showError('كلمة المرور يجب أن تكون 6 أحرف على الأقل', 'authError');
+    return;
+  }
+  
+  document.getElementById('registerBtn').disabled = true;
+  
+  try {
+    await createUserWithEmailAndPassword(auth, email, password);
+    closeAuthModal();
+    showSection('admin');
+    showSuccess('تم إنشاء الحساب بنجاح!');
+  } catch (error) {
+    console.error('خطأ في إنشاء الحساب:', error);
+    if (error.code === 'auth/email-already-in-use') {
+      showError('البريد الإلكتروني مستخدم بالفعل', 'authError');
+    } else if (error.code === 'auth/invalid-email') {
+      showError('البريد الإلكتروني غير صالح', 'authError');
+    } else {
+      showError('خطأ في إنشاء الحساب', 'authError');
+    }
+  } finally {
+    document.getElementById('registerBtn').disabled = false;
+  }
+});
+
+// تسجيل الخروج
+window.logout = async function() {
+  if (confirm('هل تريد تسجيل الخروج؟')) {
+    try {
+      await signOut(auth);
+      showSection('home');
+      showSuccess('تم تسجيل الخروج بنجاح');
+    } catch (error) {
+      showError('خطأ في تسجيل الخروج');
+    }
+  }
+}
+
 // معالج إرسال النموذج
 document.getElementById('applyForm').addEventListener('submit', async function(e) {
   e.preventDefault();
+  
+  // التحقق من Rate Limiting
+  const now = Date.now();
+  if (now - lastSubmitTime < 3600000) { // ساعة واحدة
+    submitAttempts++;
+    if (submitAttempts > MAX_ATTEMPTS_PER_HOUR) {
+      document.getElementById('rateLimitWarning').style.display = 'block';
+      return;
+    }
+  } else {
+    submitAttempts = 1;
+    lastSubmitTime = now;
+  }
+  
+  // التحقق من CAPTCHA
+  const captchaAnswer = parseInt(document.getElementById('captchaAnswer').value);
+  if (captchaAnswer !== captchaValue) {
+    showError('❌ الإجابة على المسألة الحسابية غير صحيحة');
+    generateCaptcha();
+    return;
+  }
   
   // التحقق من تحميل Firebase
   if (!database) {
@@ -1046,7 +1400,6 @@ document.getElementById('applyForm').addEventListener('submit', async function(e
   
   // التحقق من الإرسال المتكرر
   const lastSubmit = localStorage.getItem('lastSubmitTime');
-  const now = Date.now();
   if (lastSubmit && (now - parseInt(lastSubmit)) < 300000) { // 5 دقائق
     const remainingTime = Math.ceil((300000 - (now - parseInt(lastSubmit))) / 60000);
     showError(`⏰ يرجى الانتظار ${remainingTime} دقيقة قبل إرسال طلب جديد`);
@@ -1066,7 +1419,8 @@ document.getElementById('applyForm').addEventListener('submit', async function(e
     reason: document.getElementById('reason').value.trim(),
     date: new Date().toLocaleString('ar-SA'),
     status: 'جديد',
-    notes: ''
+    notes: '',
+    ip: 'hidden' // في بيئة إنتاج حقيقية، يمكن الحصول على IP من الخادم
   };
   
   // التحقق من صحة البيانات
@@ -1097,7 +1451,7 @@ document.getElementById('applyForm').addEventListener('submit', async function(e
       await saveApplicationToFirebase(formData);
       showSuccess('✅ تم إرسال طلبك بنجاح! سنتواصل معك قريباً.');
       // حفظ وقت الإرسال
-      localStorage.setItem('lastSubmitTime', Date.now().toString());
+      localStorage.setItem('lastSubmitTime', now.toString());
     } else {
       // حفظ محلياً إذا كان غير متصل
       const localApps = JSON.parse(localStorage.getItem('pendingApplications') || '[]');
@@ -1122,6 +1476,7 @@ document.getElementById('applyForm').addEventListener('submit', async function(e
     }
     
     document.getElementById('applyForm').reset();
+    generateCaptcha(); // إنشاء CAPTCHA جديد
   } catch (error) {
     console.error('خطأ:', error);
     showError('❌ حدث خطأ في الإرسال. حاول مرة أخرى.');
@@ -1130,33 +1485,6 @@ document.getElementById('applyForm').addEventListener('submit', async function(e
     document.getElementById('submitBtn').disabled = false;
   }
 });
-
-// دالة الدخول للوحة الإدارة
-window.adminAccess = function() {
-  const pass = prompt("ادخل كلمة المرور");
-  
-  // تشفير كلمة المرور المدخلة وم  قارنتها مع الهاش المحفوظ
-  const hashedInput = btoa(pass); // تشفير بسيط للمثال
-  const correctHash = "ZXhhcjMzMjE="; // هاش كلمة المرور الصحيحة
-  
-  if (hashedInput === correctHash) {
-    showSection("admin");
-    updateStats();
-    loadApplications();
-    
-    localStorage.setItem('lastAdminVisit', new Date().toISOString());
-    document.getElementById('notificationBadge').style.display = 'none';
-    
-    if (applicationsData.length > 0) {
-      const newCount = document.getElementById('notificationBadge').textContent;
-      if (newCount && newCount !== '0') {
-        showSuccess(`مرحباً! لديك ${newCount} طلب جديد.`);
-      }
-    }
-  } else {
-    alert("كلمة المرور خاطئة");
-  }
-}
 
 // دالة تحديث الإحصائيات
 function updateStats() {
@@ -1260,11 +1588,18 @@ function displayApplications(apps) {
 
 // دالة تحميل الطلبات
 window.loadApplications = function() {
-  displayApplications(applicationsData);
+  if (currentUser) {
+    displayApplications(applicationsData);
+  }
 }
 
 // دالة إضافة ملاحظة
 window.addNote = async function(id) {
+  if (!currentUser) {
+    showError("يجب تسجيل الدخول أولاً");
+    return;
+  }
+  
   const app = applicationsData.find(a => a.id === id);
   const note = prompt("أضف ملاحظة لهذا الطلب:", app.notes || "");
   if (note !== null) {
@@ -1280,6 +1615,11 @@ window.addNote = async function(id) {
 
 // دالة تحديد كمقروء
 window.markAsRead = async function(id) {
+  if (!currentUser) {
+    showError("يجب تسجيل الدخول أولاً");
+    return;
+  }
+  
   try {
     const statusRef = dbRef(database, `applications/${id}/status`);
     await dbSet(statusRef, 'مقروء');
@@ -1290,6 +1630,11 @@ window.markAsRead = async function(id) {
 
 // دالة حذف طلب
 window.removeApplication = async function(id) {
+  if (!currentUser) {
+    showError("يجب تسجيل الدخول أولاً");
+    return;
+  }
+  
   if (confirm("هل أنت متأكد من حذف هذا الطلب؟")) {
     try {
       const appRef = dbRef(database, `applications/${id}`);
@@ -1303,6 +1648,11 @@ window.removeApplication = async function(id) {
 
 // دالة مسح جميع الطلبات
 window.clearAllApplications = async function() {
+  if (!currentUser) {
+    showError("يجب تسجيل الدخول أولاً");
+    return;
+  }
+  
   if (confirm("هل أنت متأكد من حذف جميع الطلبات؟ هذا الإجراء لا يمكن التراجع عنه!")) {
     if (confirm("تأكيد نهائي: سيتم حذف " + applicationsData.length + " طلب نهائياً!")) {
       try {
@@ -1341,6 +1691,11 @@ window.syncWithFirebase = async function() {
 
 // دالة تصدير البيانات
 window.exportApplications = function() {
+  if (!currentUser) {
+    showError("يجب تسجيل الدخول أولاً");
+    return;
+  }
+  
   const dataStr = JSON.stringify(applicationsData, null, 2);
   const dataBlob = new Blob([dataStr], {type: 'application/json'});
   const link = document.createElement('a');
@@ -1352,6 +1707,11 @@ window.exportApplications = function() {
 
 // دالة تصدير إلى CSV/Excel
 window.exportToCSV = function() {
+  if (!currentUser) {
+    showError("يجب تسجيل الدخول أولاً");
+    return;
+  }
+  
   let csv = '\ufeff';
   csv += 'الاسم,العمر,ديسكورد,البريد الإلكتروني,السبب,التاريخ,الملاحظات\n';
   
@@ -1367,9 +1727,5 @@ window.exportToCSV = function() {
   showSuccess("تم تصدير البيانات إلى Excel بنجاح!");
 }
 </script>
-</body>
-</html>
-</body>
-</html>
 </body>
 </html>
