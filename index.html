@@ -12,12 +12,6 @@
       margin: 0;
       background-color: #f2f2f2;
       color: #333;
-    .warning-box {
-      background: #ffebee; 
-      padding: 10px; 
-      border-radius: 5px; 
-      border: 1px solid #f44336;
-      margin-top: 10px;
     }
     pre {
       background: #f8f9fa; 
@@ -126,10 +120,29 @@
       0% { transform: rotate(0deg); }
       100% { transform: rotate(360deg); }
     }
+    .info-box {
+      background: #e3f2fd;
+      padding: 10px;
+      border-radius: 5px;
+      border: 1px solid #2196f3;
+      margin: 10px 0;
+    }
+    .success-box {
+      background: #e8f5e9;
+      padding: 10px;
+      border-radius: 5px;
+      border: 1px solid #4caf50;
+      margin: 10px 0;
+    }
+    .warning-box {
+      background: #fff3cd;
+      padding: 10px;
+      border-radius: 5px;
+      border: 1px solid #ffc107;
+      margin: 10px 0;
+      color: #856404;
+    }
   </style>
-
-  <!-- EmailJS SDK v3 -->
-  <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
 </head>
 <body>
 
@@ -151,68 +164,57 @@
     <h2>عن السيرفر</h2>
     <p>مرحباً بك في سيرفر اكسار يمكنك التقديم للانضمام إلينا عبر صفحة التقديم</p>
     
-    <div style="background-color: #fef3c7; padding: 1rem; border-radius: 8px; margin-top: 1rem; border: 1px solid #f59e0b;">
-      <h3>⚠️ ملاحظة مهمة للمسؤول:</h3>
-      <ol style="text-align: right;">
-        <li>غيّر البريد الإلكتروني في بداية كود JavaScript إلى بريدك الحقيقي</li>
-        <li>تأكد من أن Service ID هو: <code>service_vaheead</code></li>
-        <li>تأكد من أن Template ID هو: <code>template_vfvvecb</code></li>
-        <li>في قالب EmailJS، اختر نوع "Contact Us"</li>
-        <li>ضع بريدك في حقل "To Email" في إعدادات القالب</li>
-        <li>تأكد من تفعيل الخدمة في <a href="https://dashboard.emailjs.com" target="_blank">dashboard.emailjs.com</a></li>
-      </ol>
-      
-      <h4>نموذج قالب EmailJS:</h4>
-      <pre style="background: #f8f9fa; padding: 10px; border-radius: 5px; text-align: left; direction: ltr;">
-Subject: New Application - {{from_name}}
-
-From: {{from_name}}
-Email: {{from_email}}
-
-Application Details:
-Name: {{ign}}
-Age: {{age}}
-Discord: {{discord}}
-Reason: {{reason}}
-
-Message:
-{{message}}
-
-      <h4>حل سريع للخطأ 412:</h4>
-      <p style="background: #e8f5e9; padding: 10px; border-radius: 5px;">
-        إذا استمر الخطأ 412، استخدم هذا القالب البسيط في EmailJS:<br>
-        <code style="display: block; margin-top: 10px;">{{message}}</code><br>
-        هذا سيرسل كل المعلومات في رسالة واحدة.
+    <div class="success-box">
+      <h3>✅ الموقع يستخدم Formspree الآن!</h3>
+      <p>
+        نظام إرسال أسهل وأكثر موثوقية من EmailJS.<br>
+        لا يحتاج إعدادات معقدة - فقط يعمل!
       </p>
-      
-      <div class="warning-box">
-        <strong>⚠️ تحذير مهم: لا تستخدم معلومات ديسكورد في حقول البريد!</strong><br>
-        في إعدادات القالب في EmailJS:<br>
-        ❌ لا تضع {{discord}} في Reply-To أو CC<br>
-        ✅ استخدم بريد إلكتروني حقيقي أو اتركه فارغاً
-      </div>
+    </div>
+
+    <div class="warning-box">
+      <h3>📋 تعليمات الإعداد (مرة واحدة فقط):</h3>
+      <ol style="text-align: right;">
+        <li>اذهب إلى <a href="https://formspree.io" target="_blank">formspree.io</a></li>
+        <li>أنشئ حساب مجاني (بالبريد الإلكتروني)</li>
+        <li>اضغط على "New Form"</li>
+        <li>انسخ الرابط الذي يبدأ بـ <code>https://formspree.io/f/</code></li>
+        <li>الصق الرابط في الكود بدلاً من <code>YOUR_FORMSPREE_ENDPOINT</code></li>
+        <li>ارفع الملف إلى GitHub وانتهى!</li>
+      </ol>
+      <p><strong>مميزات Formspree:</strong> 50 إرسال مجاني شهرياً، سهل الإعداد، موثوق 100%</p>
     </div>
   </section>
 
   <!-- التقديم -->
   <section id="apply">
     <h2>نموذج التقديم</h2>
+    
+    <div class="info-box">
+      <strong>💡 نصيحة:</strong> هذا النموذج يستخدم Formspree - أسهل من EmailJS!
+    </div>
+    
     <div class="error-message" id="errorMessage"></div>
     <div class="success-message" id="successMessage"></div>
-    <button onclick="testEmailJS()" style="background-color: #28a745; margin-bottom: 1rem;">اختبار الاتصال بـ EmailJS</button>
-    <button onclick="showDebugInfo()" style="background-color: #17a2b8; margin-bottom: 1rem;">عرض معلومات التشخيص</button>
+    
+    <!-- نموذج بسيط يعمل مع Formspree -->
     <form id="applyForm">
       <label>الاسم داخل اللعبة:</label>
-      <input type="text" id="ign" required />
+      <input type="text" name="ign" id="ign" required />
+      
       <label>حسابك في ديسكورد:</label>
-      <input type="text" id="discord" placeholder="مثال: name#1234" required />
+      <input type="text" name="discord" id="discord" placeholder="مثال: name#1234" required />
+      
       <label>البريد الإلكتروني (اختياري):</label>
-      <input type="email" id="userEmail" placeholder="your@email.com" />
+      <input type="email" name="email" id="email" placeholder="your@email.com" />
+      
       <label>العمر:</label>
-      <input type="number" id="age" min="10" max="100" required />
+      <input type="number" name="age" id="age" min="10" max="100" required />
+      
       <label>لماذا تريد الانضمام؟</label>
-      <textarea id="reason" rows="4" required></textarea>
-      <button type="submit" id="submitBtn">إرسال</button>
+      <textarea name="reason" id="reason" rows="4" required></textarea>
+      
+      <button type="submit" id="submitBtn">إرسال الطلب</button>
       <div class="loader" id="loader"></div>
     </form>
   </section>
@@ -241,21 +243,13 @@ Message:
 </footer>
 
 <script>
-// ⚠️ مهم جداً: غيّر هذا البريد الإلكتروني إلى بريدك الحقيقي
-const YOUR_EMAIL = "exarserver@gmail.com";  // <-- البريد الخاص بك
+// ⚠️ مهم جداً: استبدل هذا برابط Formspree الخاص بك
+const FORMSPREE_ENDPOINT = "https://formspree.io/f/mrbkjnbn"; // مثال: https://formspree.io/f/xyzabc
 
-// إعدادات EmailJS
-// Service ID: service_vaheead
-// Template ID: template_vfvvecb
-// Template Type: Contact Us
-
-// تهيئة EmailJS مع التحقق من التحميل
-let emailjsReady = false;
-
-// تخزين الطلبات في متغير
+// تخزين الطلبات محلياً
 let applicationsData = [];
 
-// دوال عامة يجب أن تكون متاحة للـ HTML
+// دوال عامة
 window.showSection = function(id) {
   document.querySelectorAll("section").forEach(sec => sec.classList.remove("active"));
   document.getElementById(id).classList.add("active");
@@ -269,9 +263,6 @@ window.showError = function(message) {
     setTimeout(() => {
       errorDiv.style.display = 'none';
     }, 5000);
-  } else {
-    // إذا لم يكن العنصر موجوداً، استخدم alert
-    alert("خطأ: " + message);
   }
 }
 
@@ -283,40 +274,17 @@ window.showSuccess = function(message) {
     setTimeout(() => {
       successDiv.style.display = 'none';
     }, 5000);
-  } else {
-    // إذا لم يكن العنصر موجوداً، استخدم alert
-    alert(message);
   }
 }
 
-// تهيئة EmailJS عند تحميل الصفحة
-window.addEventListener('DOMContentLoaded', function() {
-  if (typeof emailjs !== 'undefined') {
-    try {
-      emailjs.init("z8Sl3G2pDfxckidCk");
-      emailjsReady = true;
-      console.log("EmailJS تم تحميله بنجاح");
-    } catch (error) {
-      console.error("خطأ في تهيئة EmailJS:", error);
-    }
-  } else {
-    console.error("فشل تحميل مكتبة EmailJS");
-  }
-  
-  // إضافة معالج النموذج
-  const form = document.getElementById("applyForm");
-  if (form) {
-    form.addEventListener("submit", handleFormSubmit);
-  }
-});
-
 // معالج إرسال النموذج
-function handleFormSubmit(e) {
+document.getElementById('applyForm').addEventListener('submit', async function(e) {
   e.preventDefault();
   
-  // التحقق من جاهزية EmailJS
-  if (!emailjsReady) {
-    showError("مكتبة البريد الإلكتروني غير جاهزة. حاول مرة أخرى.");
+  // التحقق من رابط Formspree
+  if (FORMSPREE_ENDPOINT === "YOUR_FORMSPREE_ENDPOINT") {
+    showError("⚠️ يرجى إضافة رابط Formspree الخاص بك في الكود!");
+    console.error("يجب استبدال YOUR_FORMSPREE_ENDPOINT برابط Formspree الحقيقي");
     return;
   }
   
@@ -324,97 +292,54 @@ function handleFormSubmit(e) {
   document.getElementById('loader').style.display = 'block';
   document.getElementById('submitBtn').disabled = true;
   
-  const ign = document.getElementById("ign").value.trim();
-  const age = document.getElementById("age").value.trim();
-  const discord = document.getElementById("discord").value.trim();
-  const reason = document.getElementById("reason").value.trim();
-  const userEmail = document.getElementById("userEmail").value.trim() || "noreply@exarserver.com";
-
-  // حفظ البيانات محلياً
-  const newApplication = { 
-    ign, 
-    age, 
-    discord, 
-    reason,
-    email: userEmail,
-    date: new Date().toLocaleString('ar-SA') 
+  // جمع البيانات
+  const formData = {
+    ign: document.getElementById('ign').value.trim(),
+    discord: document.getElementById('discord').value.trim(),
+    email: document.getElementById('email').value.trim() || 'غير محدد',
+    age: document.getElementById('age').value.trim(),
+    reason: document.getElementById('reason').value.trim(),
+    _subject: `طلب انضمام جديد من ${document.getElementById('ign').value}`,
+    date: new Date().toLocaleString('ar-SA')
   };
   
-  applicationsData.push(newApplication);
-
-  // معاملات القالب - تشمل جميع الحقول المحتملة
-  const templateParams = {
-    // حقول EmailJS الافتراضية
-    from_name: ign,
-    from_email: userEmail, // استخدام البريد الإلكتروني المدخل أو الافتراضي
-    to_name: "Admin",
-    to_email: YOUR_EMAIL,
-    reply_to: userEmail, // للرد على البريد الصحيح
-    
-    // حقول مخصصة للبيانات
-    user_name: ign,
-    name: ign,
-    ign: ign,
-    age: age,
-    discord: discord, // حفظ معلومات ديسكورد كنص عادي
-    reason: reason,
-    date: new Date().toLocaleString('ar-SA'),
-    
-    // حقول الرسالة
-    subject: `طلب انضمام جديد من ${ign}`,
-    message: `طلب انضمام جديد لسيرفر Exar\n\nالاسم داخل اللعبة: ${ign}\nالعمر: ${age}\nحساب ديسكورد: ${discord}\nالبريد الإلكتروني: ${userEmail}\nسبب الانضمام: ${reason}\n\nالتاريخ: ${new Date().toLocaleString('ar-SA')}`,
-    
-    // حقول إضافية
-    email: userEmail, // البريد الإلكتروني المدخل
-    phone: "غير متوفر"
-  };
-
-  console.log("إرسال البيانات:", templateParams);
-  console.log("عدد الحقول المرسلة:", Object.keys(templateParams).length);
-  console.log("الحقول المرسلة:", Object.keys(templateParams).join(", "));
-
-  // إرسال البريد الإلكتروني
-  emailjs.send("service_vaheead", "template_vfvvecb", templateParams)
-    .then(function(response) {
-      console.log("نجح الإرسال!", response);
-      showSuccess("تم إرسال طلبك بنجاح! سنتواصل معك قريباً.");
-      document.getElementById("applyForm").reset();
-    })
-    .catch(function(error) {
-      console.error("تفاصيل الخطأ:", error);
-      
-      // معالجة الأخطاء
-      let errorMessage = "حدث خطأ في الإرسال. ";
-      
-      if (error.status === 0) {
-        errorMessage += "تحقق من اتصالك بالإنترنت.";
-      } else if (error.status === 400) {
-        errorMessage += "معرف الخدمة أو القالب غير صحيح. تحقق من Service ID و Template ID.";
-      } else if (error.status === 401) {
-        errorMessage += "مفتاح المستخدم غير صحيح. تحقق من User ID.";
-      } else if (error.status === 412) {
-        errorMessage += "تحقق من أن جميع الحقول المطلوبة في القالب موجودة. ";
-        errorMessage += "اضغط على 'عرض معلومات التشخيص' لرؤية الحقول المرسلة.";
-        console.error("خطأ 412: الحقول المطلوبة غير موجودة");
-        console.error("تحقق من قالب EmailJS وتأكد من استخدام المتغيرات الصحيحة");
-        console.error("نصيحة: جرب استخدام {{message}} فقط في القالب كحل مؤقت");
-      } else if (error.status === 422) {
-        errorMessage += "خطأ في معاملات القالب. تحقق من أسماء المتغيرات في القالب.";
-      } else if (error.status === 429) {
-        errorMessage += "تم تجاوز حد الإرسال المسموح (200 رسالة شهرياً للحساب المجاني).";
-      } else {
-        errorMessage += error.text || "خطأ غير معروف.";
-      }
-      
-      showError(errorMessage);
-      console.log("تم حفظ البيانات محلياً:", newApplication);
-    })
-    .finally(function() {
-      // إخفاء مؤشر التحميل
-      document.getElementById('loader').style.display = 'none';
-      document.getElementById('submitBtn').disabled = false;
+  // حفظ البيانات محلياً
+  applicationsData.push({
+    ...formData,
+    date: new Date().toLocaleString('ar-SA')
+  });
+  
+  try {
+    // إرسال البيانات إلى Formspree
+    const response = await fetch(FORMSPREE_ENDPOINT, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
+      },
+      body: JSON.stringify(formData)
     });
-}
+    
+    if (response.ok) {
+      showSuccess('✅ تم إرسال طلبك بنجاح! سنتواصل معك قريباً.');
+      document.getElementById('applyForm').reset();
+    } else {
+      const data = await response.json();
+      if (data.errors) {
+        showError('❌ خطأ في الإرسال: ' + JSON.stringify(data.errors));
+      } else {
+        showError('❌ حدث خطأ في الإرسال. حاول مرة أخرى.');
+      }
+    }
+  } catch (error) {
+    console.error('خطأ:', error);
+    showError('❌ خطأ في الاتصال. تحقق من اتصالك بالإنترنت.');
+  } finally {
+    // إخفاء مؤشر التحميل
+    document.getElementById('loader').style.display = 'none';
+    document.getElementById('submitBtn').disabled = false;
+  }
+});
 
 // دالة الدخول للوحة الإدارة
 window.adminAccess = function() {
@@ -444,7 +369,7 @@ window.loadApplications = function() {
       <strong>الاسم داخل اللعبة:</strong> ${app.ign}<br>
       <strong>العمر:</strong> ${app.age}<br>
       <strong>ديسكورد:</strong> ${app.discord}<br>
-      <strong>البريد الإلكتروني:</strong> ${app.email || 'غير محدد'}<br>
+      <strong>البريد الإلكتروني:</strong> ${app.email}<br>
       <strong>السبب:</strong> ${app.reason}<br>
       <strong>التاريخ:</strong> ${app.date || 'غير محدد'}<br>
       <button onclick="removeApplication(${index})" style="background-color: #dc3545; margin-top: 10px;">حذف</button>
@@ -469,95 +394,15 @@ window.clearAllApplications = function() {
   }
 }
 
-// دالة عرض معلومات التشخيص
-window.showDebugInfo = function() {
-  const debugInfo = `
-معلومات التشخيص:
-==================
-البريد المستخدم: ${YOUR_EMAIL}
-Service ID: service_vaheead
-Template ID: template_vfvvecb
-User ID: z8Sl3G2pDfxckidCk
-EmailJS جاهز: ${emailjsReady ? 'نعم' : 'لا'}
-
-الحقول المرسلة في القالب:
-- from_name (اسم المرسل)
-- from_email (بريد المرسل)
-- to_name (اسم المستقبل)
-- to_email (بريد المستقبل)
-- reply_to (الرد على)
-- user_name (اسم المستخدم)
-- name (الاسم)
-- ign (الاسم في اللعبة)
-- age (العمر)
-- discord (ديسكورد)
-- reason (السبب)
-- date (التاريخ)
-- subject (عنوان الرسالة)
-- message (الرسالة)
-- email (البريد)
-- phone (الهاتف)
-- userEmail (البريد المدخل من المستخدم)
-
-نصائح:
-1. تأكد من أن القالب في EmailJS يستخدم المتغيرات بالشكل {{variable_name}}
-2. تحقق من إعدادات القالب وأن To Email محدد بشكل صحيح
-3. جرب نسخ القالب الافتراضي "Contact Us" من EmailJS
-  `;
-  
-  console.log(debugInfo);
-  alert(debugInfo);
-}
-
-// دالة اختبار الاتصال بـ EmailJS
-window.testEmailJS = function() {
-  if (!emailjsReady) {
-    showError("EmailJS غير جاهز بعد. انتظر قليلاً وحاول مرة أخرى.");
-    return;
+// تحذير إذا لم يتم تغيير رابط Formspree
+window.addEventListener('DOMContentLoaded', function() {
+  if (FORMSPREE_ENDPOINT === "YOUR_FORMSPREE_ENDPOINT") {
+    console.warn("⚠️ تحذير: يجب استبدال YOUR_FORMSPREE_ENDPOINT برابط Formspree الحقيقي!");
+    console.log("1. اذهب إلى https://formspree.io");
+    console.log("2. أنشئ حساب وانشئ نموذج جديد");
+    console.log("3. انسخ الرابط والصقه في الكود");
   }
-
-  showSuccess("جاري اختبار الاتصال...");
-  
-  const testParams = {
-    // حقول EmailJS الافتراضية
-    from_name: "اختبار",
-    from_email: "noreply@exarserver.com",
-    to_name: "Admin",
-    to_email: YOUR_EMAIL,
-    reply_to: "noreply@exarserver.com",
-    
-    // حقول مخصصة
-    user_name: "اختبار",
-    name: "اختبار",
-    ign: "اختبار",
-    age: "18",
-    discord: "test#1234", // معلومات ديسكورد كنص
-    reason: "هذه رسالة اختبار للتأكد من عمل النظام",
-    date: new Date().toLocaleString('ar-SA'),
-    
-    // حقول الرسالة
-    subject: "رسالة اختبار من موقع Exar",
-    message: "هذه رسالة اختبار للتأكد من أن EmailJS يعمل بشكل صحيح\n\nديسكورد: test#1234",
-    
-    // حقول إضافية
-    email: "noreply@exarserver.com",
-    phone: "غير متوفر"
-  };
-
-  emailjs.send("service_vaheead", "template_vfvvecb", testParams)
-    .then(function(response) {
-      showSuccess("نجح الاختبار! EmailJS يعمل بشكل صحيح.");
-      console.log("نجح اختبار EmailJS:", response);
-    })
-    .catch(function(error) {
-      console.error("فشل اختبار EmailJS:", error);
-      if (error.status === 412) {
-        showError("خطأ 412: الحقول المطلوبة في القالب غير موجودة. تحقق من إعدادات القالب في EmailJS.");
-      } else {
-        showError("فشل الاختبار. راجع Console للتفاصيل.");
-      }
-    });
-}
+});
 </script>
 </body>
 </html>
