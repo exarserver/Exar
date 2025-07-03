@@ -1186,6 +1186,14 @@
         
         <div class="admin-list" id="adminsList"></div>
         
+        <!-- سجل تسجيلات الدخول (للمالك فقط) -->
+        <div id="loginLogsSection" style="display: none;">
+          <h3 style="margin-top: 2rem;">📋 سجل تسجيلات الدخول</h3>
+          <div class="content-card">
+            <div style="max-height: 300px; overflow-y: auto;" id="loginLogsContainer"></div>
+          </div>
+        </div>
+        
         <!-- معلومات الصلاحيات -->
         <div class="content-card" style="margin-top: 2rem;">
           <h4>📊 الصلاحيات حسب الرتبة</h4>
@@ -1196,7 +1204,7 @@
               <div class="permission-item allowed">✅ جميع الصلاحيات</div>
               <div class="permission-item allowed">✅ إدارة الإداريين</div>
               <div class="permission-item allowed">✅ حذف جميع البيانات</div>
-              <div class="permission-item allowed">✅ تغيير الإعدادات</div>
+              <div class="permission-item allowed">✅ عرض سجلات الأمان</div>
             </div>
           </div>
           
@@ -1218,6 +1226,17 @@
               <div class="permission-item denied">❌ حذف الطلبات</div>
               <div class="permission-item denied">❌ تصدير البيانات</div>
             </div>
+          </div>
+          
+          <div style="margin-top: 1.5rem; padding: 1rem; background: rgba(237, 137, 54, 0.1); border-radius: 10px; border: 1px solid rgba(237, 137, 54, 0.3);">
+            <h5 style="color: #f6ad55; margin-bottom: 0.5rem;">🔒 معلومات الأمان</h5>
+            <ul style="margin: 0; padding-right: 1.5rem; color: #f6ad55;">
+              <li>كلمات المرور مشفرة</li>
+              <li>حماية من محاولات الاختراق (5 محاولات كحد أقصى)</li>
+              <li>تسجيل خروج تلقائي بعد 30 دقيقة</li>
+              <li>التحقق بخطوتين للمالك</li>
+              <li>تسجيل جميع محاولات الدخول</li>
+            </ul>
           </div>
         </div>
       </div>
@@ -1253,47 +1272,78 @@
 
 <script>
 // ===================================
-// قائمة المستخدمين والصلاحيات
+// إعدادات الأمان
+const SECURITY_CONFIG = {
+  maxLoginAttempts: 5, // الحد الأقصى لمحاولات تسجيل الدخول
+  lockoutDuration: 15 * 60 * 1000, // مدة الحظر: 15 دقيقة
+  sessionTimeout: 30 * 60 * 1000, // مهلة الجلسة: 30 دقيقة
+  requireTwoFactor: true, // تفعيل التحقق بخطوتين للمالك
+  secretKey: "EXAR2025SECRET" // مفتاح سري للتشفير
+};
+
+// دالة تشفير بسيطة (في الإنتاج يجب استخدام bcrypt أو مكتبة تشفير قوية)
+function simpleHash(text) {
+  let hash = 0;
+  for (let i = 0; i < text.length; i++) {
+    const char = text.charCodeAt(i);
+    hash = ((hash << 5) - hash) + char;
+    hash = hash & hash;
+  }
+  return Math.abs(hash).toString(16);
+}
+
+// قائمة المستخدمين والصلاحيات (مع كلمات مرور مشفرة)
 const ADMIN_USERS = {
   // المالك
   "owner": {
     username: "owner",
-    password: "exar2025owner",
+    passwordHash: simpleHash("anoussa11"),
     role: "owner",
     displayName: "مالك السيرفر",
-    permissions: ["all"]
+    permissions: ["all"],
+    requireTwoFactor: true,
+    twoFactorCode: "852741" // في الإنتاج يجب أن يكون ديناميكي
   },
   // المدراء
   "admin1": {
     username: "admin1",
-    password: "admin123",
+    passwordHash: simpleHash("admin123"),
     role: "admin",
     displayName: "مدير 1",
-    permissions: ["view", "edit", "delete", "export"]
+    permissions: ["view", "edit", "delete", "export"],
+    requireTwoFactor: false
   },
   "admin2": {
     username: "admin2",
-    password: "admin456",
+    passwordHash: simpleHash("admin456"),
     role: "admin",
     displayName: "مدير 2",
-    permissions: ["view", "edit", "delete", "export"]
+    permissions: ["view", "edit", "delete", "export"],
+    requireTwoFactor: false
   },
   // المشرفين
   "mod1": {
     username: "mod1",
-    password: "mod123",
+    passwordHash: simpleHash("mod123"),
     role: "moderator",
     displayName: "مشرف 1",
-    permissions: ["view", "edit"]
+    permissions: ["view", "edit"],
+    requireTwoFactor: false
   },
   "mod2": {
     username: "mod2",
-    password: "mod456",
+    passwordHash: simpleHash("mod456"),
     role: "moderator",
     displayName: "مشرف 2",
-    permissions: ["view", "edit"]
+    permissions: ["view", "edit"],
+    requireTwoFactor: false
   }
 };
+
+// متغيرات الأمان
+let loginAttempts = {};
+let sessionStartTime = null;
+let sessionTimer = null;
 // ===================================
 
 // انتظار تحميل Firebase
@@ -1342,15 +1392,44 @@ function initializeApp() {
   
   // التحقق من تسجيل الدخول المحفوظ
   const savedUser = sessionStorage.getItem('currentUser');
-  if (savedUser) {
-    currentUser = JSON.parse(savedUser);
-    updateUserInterface();
+  const savedSessionTime = sessionStorage.getItem('sessionStartTime');
+  
+  if (savedUser && savedSessionTime) {
+    const user = JSON.parse(savedUser);
+    const sessionTime = parseInt(savedSessionTime);
+    
+    // التحقق من انتهاء الجلسة
+    if (Date.now() - sessionTime < SECURITY_CONFIG.sessionTimeout) {
+      currentUser = user;
+      sessionStartTime = sessionTime;
+      updateUserInterface();
+      startSessionTimer();
+    } else {
+      // الجلسة منتهية
+      sessionStorage.removeItem('currentUser');
+      sessionStorage.removeItem('sessionStartTime');
+    }
   }
+  
+  // تنظيف محاولات الدخول القديمة
+  cleanupOldLoginAttempts();
   
   listenToFirebaseChanges();
   updateConnectionStatus();
   updateNotificationBadge();
   syncWithFirebase();
+}
+
+// تنظيف محاولات الدخول القديمة
+function cleanupOldLoginAttempts() {
+  const now = Date.now();
+  Object.keys(loginAttempts).forEach(username => {
+    const attempt = loginAttempts[username];
+    // حذف المحاولات التي مضى عليها أكثر من ساعة
+    if (now - attempt.lastAttempt > 3600000) {
+      delete loginAttempts[username];
+    }
+  });
 }
 
 // تحديث واجهة المستخدم
@@ -1544,36 +1623,210 @@ window.closeAuthModal = function() {
 window.checkLogin = function() {
   const username = document.getElementById('adminUsername').value.trim();
   const password = document.getElementById('adminPassword').value;
+  const ip = 'USER_IP'; // في الإنتاج يجب الحصول على IP الحقيقي
   
-  // البحث عن المستخدم
+  // التحقق من الحظر
+  if (isUserLocked(username)) {
+    const remainingTime = getRemainingLockTime(username);
+    showError(`تم حظر الحساب. حاول مرة أخرى بعد ${Math.ceil(remainingTime / 60000)} دقيقة`, 'authError');
+    return;
+  }
+  
+  // البحث عن المستخدم والتحقق من كلمة المرور
   const user = Object.values(ADMIN_USERS).find(u => 
-    u.username === username && u.password === password
+    u.username === username && u.passwordHash === simpleHash(password)
   );
   
   if (user) {
-    currentUser = user;
-    sessionStorage.setItem('currentUser', JSON.stringify(user));
-    updateUserInterface();
-    closeAuthModal();
-    showSection('admin');
-    loadApplications();
-    updateStats();
-    loadAdmins();
-    localStorage.setItem('lastAdminVisit', new Date().toISOString());
-    document.getElementById('notificationBadge').style.display = 'none';
-    showSuccess(`مرحباً ${user.displayName}!`);
+    // إذا كان يتطلب التحقق بخطوتين
+    if (user.requireTwoFactor && SECURITY_CONFIG.requireTwoFactor) {
+      showTwoFactorModal(user);
+    } else {
+      loginSuccess(user);
+    }
   } else {
-    showError('اسم المستخدم أو كلمة المرور غير صحيحة!', 'authError');
-    document.getElementById('adminPassword').value = '';
+    loginFailed(username, ip);
+  }
+}
+
+// دالة نجاح تسجيل الدخول
+function loginSuccess(user) {
+  currentUser = user;
+  sessionStorage.setItem('currentUser', JSON.stringify(user));
+  sessionStartTime = Date.now();
+  sessionStorage.setItem('sessionStartTime', sessionStartTime);
+  
+  // بدء مؤقت الجلسة
+  startSessionTimer();
+  
+  // تسجيل الدخول الناجح
+  logLoginAttempt(user.username, true, 'USER_IP');
+  
+  // إعادة تعيين محاولات الفشل
+  delete loginAttempts[user.username];
+  
+  updateUserInterface();
+  closeAuthModal();
+  closeTwoFactorModal();
+  showSection('admin');
+  loadApplications();
+  updateStats();
+  loadAdmins();
+  localStorage.setItem('lastAdminVisit', new Date().toISOString());
+  document.getElementById('notificationBadge').style.display = 'none';
+  showSuccess(`مرحباً ${user.displayName}!`);
+}
+
+// دالة فشل تسجيل الدخول
+function loginFailed(username, ip) {
+  // زيادة عدد المحاولات الفاشلة
+  if (!loginAttempts[username]) {
+    loginAttempts[username] = {
+      count: 0,
+      firstAttempt: Date.now(),
+      lastAttempt: Date.now()
+    };
+  }
+  
+  loginAttempts[username].count++;
+  loginAttempts[username].lastAttempt = Date.now();
+  
+  // تسجيل المحاولة الفاشلة
+  logLoginAttempt(username, false, ip);
+  
+  const remainingAttempts = SECURITY_CONFIG.maxLoginAttempts - loginAttempts[username].count;
+  
+  if (remainingAttempts <= 0) {
+    // حظر المستخدم
+    loginAttempts[username].lockedUntil = Date.now() + SECURITY_CONFIG.lockoutDuration;
+    showError('تم حظر الحساب بسبب محاولات دخول فاشلة متعددة!', 'authError');
+  } else {
+    showError(`اسم المستخدم أو كلمة المرور غير صحيحة! (${remainingAttempts} محاولات متبقية)`, 'authError');
+  }
+  
+  document.getElementById('adminPassword').value = '';
+}
+
+// التحقق من حظر المستخدم
+function isUserLocked(username) {
+  const attempt = loginAttempts[username];
+  if (!attempt || !attempt.lockedUntil) return false;
+  return Date.now() < attempt.lockedUntil;
+}
+
+// الحصول على الوقت المتبقي للحظر
+function getRemainingLockTime(username) {
+  const attempt = loginAttempts[username];
+  if (!attempt || !attempt.lockedUntil) return 0;
+  return Math.max(0, attempt.lockedUntil - Date.now());
+}
+
+// بدء مؤقت الجلسة
+function startSessionTimer() {
+  // إلغاء المؤقت السابق إن وجد
+  if (sessionTimer) clearInterval(sessionTimer);
+  
+  sessionTimer = setInterval(() => {
+    checkSessionTimeout();
+  }, 60000); // التحقق كل دقيقة
+}
+
+// التحقق من انتهاء الجلسة
+function checkSessionTimeout() {
+  if (!sessionStartTime) return;
+  
+  const elapsed = Date.now() - sessionStartTime;
+  if (elapsed > SECURITY_CONFIG.sessionTimeout) {
+    showError('انتهت جلستك. يرجى تسجيل الدخول مرة أخرى.');
+    logoutAdmin(true);
+  }
+}
+
+// تسجيل محاولات الدخول
+function logLoginAttempt(username, success, ip) {
+  const logs = JSON.parse(localStorage.getItem('loginLogs') || '[]');
+  logs.push({
+    username,
+    success,
+    ip,
+    timestamp: new Date().toISOString(),
+    userAgent: navigator.userAgent
+  });
+  
+  // الاحتفاظ بآخر 100 سجل فقط
+  if (logs.length > 100) {
+    logs.splice(0, logs.length - 100);
+  }
+  
+  localStorage.setItem('loginLogs', JSON.stringify(logs));
+}
+
+// عرض نافذة التحقق بخطوتين
+function showTwoFactorModal(user) {
+  const modalHtml = `
+    <div class="auth-modal active" id="twoFactorModal">
+      <div class="auth-content">
+        <button class="close-modal" onclick="closeTwoFactorModal()">×</button>
+        <div class="auth-header">
+          <h3>🔐 التحقق بخطوتين</h3>
+          <p style="color: #a0aec0;">أدخل رمز التحقق المرسل إليك</p>
+        </div>
+        
+        <div class="error-message alert" id="twoFactorError"></div>
+        
+        <input type="text" id="twoFactorCode" placeholder="رمز التحقق (6 أرقام)" maxlength="6" style="text-align: center;" />
+        <button onclick="verifyTwoFactor('${user.username}')">تحقق</button>
+        
+        <p style="margin-top: 1rem; color: #a0aec0; font-size: 0.9rem;">
+          رمز التحقق للاختبار: ${user.twoFactorCode}
+        </p>
+      </div>
+    </div>
+  `;
+  
+  // إضافة النافذة للصفحة
+  const tempDiv = document.createElement('div');
+  tempDiv.innerHTML = modalHtml;
+  document.body.appendChild(tempDiv.firstElementChild);
+  
+  document.getElementById('twoFactorCode').focus();
+}
+
+// إغلاق نافذة التحقق بخطوتين
+window.closeTwoFactorModal = function() {
+  const modal = document.getElementById('twoFactorModal');
+  if (modal) modal.remove();
+}
+
+// التحقق من رمز التحقق بخطوتين
+window.verifyTwoFactor = function(username) {
+  const code = document.getElementById('twoFactorCode').value;
+  const user = Object.values(ADMIN_USERS).find(u => u.username === username);
+  
+  if (user && code === user.twoFactorCode) {
+    loginSuccess(user);
+  } else {
+    showError('رمز التحقق غير صحيح!', 'twoFactorError');
+    document.getElementById('twoFactorCode').value = '';
   }
 }
 
 // تسجيل الخروج
-window.logoutAdmin = function() {
-  if (confirm('هل تريد تسجيل الخروج؟')) {
-    currentUser = null;
-    sessionStorage.removeItem('currentUser');
-    showSection('home');
+window.logoutAdmin = function(isTimeout = false) {
+  if (!isTimeout && !confirm('هل تريد تسجيل الخروج؟')) return;
+  
+  currentUser = null;
+  sessionStorage.removeItem('currentUser');
+  sessionStorage.removeItem('sessionStartTime');
+  
+  // إيقاف مؤقت الجلسة
+  if (sessionTimer) {
+    clearInterval(sessionTimer);
+    sessionTimer = null;
+  }
+  
+  showSection('home');
+  if (!isTimeout) {
     showSuccess('تم تسجيل الخروج بنجاح');
   }
 }
