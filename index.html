@@ -12,43 +12,6 @@
   <!-- Google Fonts -->
   <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;900&display=swap" rel="stylesheet">
   
-  <!-- Firebase -->
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-app.js";
-    import { getDatabase, ref, push, set, onValue, remove, serverTimestamp, get } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-database.js";
-    
-    const firebaseConfig = {
-      apiKey: "AIzaSyB-il2jFPjrro4yYB-mGOZDNXGofOzzk1Q",
-      authDomain: "severexar.firebaseapp.com",
-      databaseURL: "https://severexar-default-rtdb.europe-west1.firebasedatabase.app",
-      projectId: "severexar",
-      storageBucket: "severexar.firebasestorage.app",
-      messagingSenderId: "273479278732",
-      appId: "1:273479278732:web:ae28b8a7a3510219559ba9",
-      measurementId: "G-RB7DBC8SV8"
-    };
-    
-    try {
-      const app = initializeApp(firebaseConfig);
-      const database = getDatabase(app);
-      
-      window.firebaseDB = {
-        database,
-        ref,
-        push,
-        set,
-        get,
-        onValue,
-        remove,
-        serverTimestamp
-      };
-      
-      console.log('Firebase initialized successfully');
-    } catch (error) {
-      console.error('Firebase initialization error:', error);
-    }
-  </script>
-  
   <!-- تنسيقات CSS -->
   <style>
     * {
@@ -1036,7 +999,7 @@
       display: none;
     }
 
-    /* Firebase Connection Status */
+    /* Firebase Status */
     .firebase-status {
       background: rgba(237, 137, 54, 0.1);
       border: 1px solid rgba(237, 137, 54, 0.3);
@@ -1052,6 +1015,54 @@
       background: rgba(72, 187, 120, 0.1);
       border: 1px solid rgba(72, 187, 120, 0.3);
       color: #68d391;
+    }
+
+    .firebase-status.error {
+      background: rgba(245, 101, 101, 0.1);
+      border: 1px solid rgba(245, 101, 101, 0.3);
+      color: #fc8181;
+    }
+
+    /* Debug Console */
+    .debug-console {
+      position: fixed;
+      bottom: 80px;
+      right: 20px;
+      background: rgba(15, 15, 30, 0.95);
+      border: 1px solid rgba(102, 126, 234, 0.3);
+      border-radius: 10px;
+      padding: 1rem;
+      max-width: 400px;
+      max-height: 200px;
+      overflow-y: auto;
+      font-family: monospace;
+      font-size: 0.85rem;
+      color: #a0aec0;
+      display: none;
+    }
+
+    .debug-console.active {
+      display: block;
+    }
+
+    .debug-line {
+      margin-bottom: 0.5rem;
+      padding: 0.3rem;
+      background: rgba(102, 126, 234, 0.1);
+      border-radius: 5px;
+    }
+
+    .debug-toggle {
+      position: fixed;
+      bottom: 20px;
+      left: 20px;
+      background: rgba(102, 126, 234, 0.3);
+      color: white;
+      border: none;
+      padding: 0.5rem 1rem;
+      border-radius: 20px;
+      cursor: pointer;
+      font-size: 0.85rem;
     }
   </style>
 </head>
@@ -1211,14 +1222,6 @@
         
         <div class="admin-list" id="adminsList"></div>
         
-        <!-- سجل تسجيلات الدخول (للمالك فقط) -->
-        <div id="loginLogsSection" style="display: none;">
-          <h3 style="margin-top: 2rem;">📋 سجل تسجيلات الدخول</h3>
-          <div class="content-card">
-            <div style="max-height: 300px; overflow-y: auto;" id="loginLogsContainer"></div>
-          </div>
-        </div>
-        
         <!-- معلومات الصلاحيات -->
         <div class="content-card" style="margin-top: 2rem;">
           <h4>📊 الصلاحيات حسب الرتبة</h4>
@@ -1252,17 +1255,6 @@
               <div class="permission-item denied">❌ تصدير البيانات</div>
             </div>
           </div>
-          
-          <div style="margin-top: 1.5rem; padding: 1rem; background: rgba(237, 137, 54, 0.1); border-radius: 10px; border: 1px solid rgba(237, 137, 54, 0.3);">
-            <h5 style="color: #f6ad55; margin-bottom: 0.5rem;">🔒 معلومات الأمان</h5>
-            <ul style="margin: 0; padding-right: 1.5rem; color: #f6ad55;">
-              <li>كلمات المرور مشفرة</li>
-              <li>حماية من محاولات الاختراق (5 محاولات كحد أقصى)</li>
-              <li>تسجيل خروج تلقائي بعد 30 دقيقة</li>
-              <li>التحقق بخطوتين للمالك</li>
-              <li>تسجيل جميع محاولات الدخول</li>
-            </ul>
-          </div>
         </div>
       </div>
     </section>
@@ -1291,11 +1283,64 @@
     <span id="statusText">متصل</span>
   </div>
 
+  <!-- Debug Console -->
+  <button class="debug-toggle" onclick="toggleDebug()">🐛 Debug</button>
+  <div class="debug-console" id="debugConsole"></div>
+
   <footer>
     &copy; 2025 سيرفر إكسار - جميع الحقوق محفوظة | صُمم بـ ❤️
   </footer>
 
+  <!-- Firebase Scripts -->
+  <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-database-compat.js"></script>
+
 <script>
+// Debug Console
+const debugLog = (message, type = 'info') => {
+  const time = new Date().toLocaleTimeString();
+  const debugConsole = document.getElementById('debugConsole');
+  const line = document.createElement('div');
+  line.className = 'debug-line';
+  line.innerHTML = `<span style="color: ${type === 'error' ? '#f56565' : type === 'success' ? '#48bb78' : '#4299e1'}">[${time}]</span> ${message}`;
+  debugConsole.appendChild(line);
+  debugConsole.scrollTop = debugConsole.scrollHeight;
+  console.log(`[${type.toUpperCase()}] ${message}`);
+};
+
+window.toggleDebug = () => {
+  const debugConsole = document.getElementById('debugConsole');
+  debugConsole.classList.toggle('active');
+};
+
+// Firebase Configuration
+const firebaseConfig = {
+  apiKey: "AIzaSyB-il2jFPjrro4yYB-mGOZDNXGofOzzk1Q",
+  authDomain: "severexar.firebaseapp.com",
+  databaseURL: "https://severexar-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId: "severexar",
+  storageBucket: "severexar.firebasestorage.app",
+  messagingSenderId: "273479278732",
+  appId: "1:273479278732:web:ae28b8a7a3510219559ba9",
+  measurementId: "G-RB7DBC8SV8"
+};
+
+// Initialize Firebase
+let app, database;
+let firebaseInitialized = false;
+
+try {
+  debugLog('Initializing Firebase...');
+  app = firebase.initializeApp(firebaseConfig);
+  database = firebase.database();
+  firebaseInitialized = true;
+  debugLog('Firebase initialized successfully', 'success');
+  showFirebaseSuccess();
+} catch (error) {
+  debugLog(`Firebase initialization error: ${error.message}`, 'error');
+  showFirebaseError();
+}
+
 // ===================================
 // إعدادات الأمان
 const SECURITY_CONFIG = {
@@ -1376,8 +1421,6 @@ let applicationsData = [];
 let currentFilter = 'all';
 let isOnline = navigator.onLine;
 let currentUser = null;
-let database, dbRef, dbPush, dbSet, dbGet, dbOnValue, dbRemove, serverTimestamp;
-let firebaseInitialized = false;
 
 // دالة لتنظيف النصوص من HTML
 function escapeHtml(text) {
@@ -1391,68 +1434,12 @@ function escapeHtml(text) {
   return String(text).replace(/[&<>"']/g, m => map[m]);
 }
 
-// انتظار تحميل Firebase
-let initRetries = 0;
-const maxRetries = 50;
-
-function waitForFirebase() {
-  const checkInterval = setInterval(() => {
-    initRetries++;
-    
-    if (window.firebaseDB) {
-      clearInterval(checkInterval);
-      console.log('Firebase found, initializing...');
-      initializeApp();
-    } else if (initRetries > maxRetries) {
-      clearInterval(checkInterval);
-      console.error('Firebase failed to load after retries');
-      showFirebaseError();
-    }
-  }, 100);
-}
-
-// تهيئة التطبيق
-function initializeApp() {
-  try {
-    const fb = window.firebaseDB;
-    database = fb.database;
-    dbRef = fb.ref;
-    dbPush = fb.push;
-    dbSet = fb.set;
-    dbGet = fb.get;
-    dbOnValue = fb.onValue;
-    dbRemove = fb.remove;
-    serverTimestamp = fb.serverTimestamp;
-    
-    firebaseInitialized = true;
-    console.log('App initialized successfully');
-    
-    // إظهار رسالة نجاح Firebase
-    showFirebaseSuccess();
-    
-    // التحقق من تسجيل الدخول المحفوظ
-    checkSavedSession();
-    
-    // تنظيف محاولات الدخول القديمة
-    cleanupOldLoginAttempts();
-    
-    // بدء مراقبة البيانات
-    listenToFirebaseChanges();
-    updateConnectionStatus();
-    updateNotificationBadge();
-    syncWithFirebase();
-    
-  } catch (error) {
-    console.error('App initialization error:', error);
-    showFirebaseError();
-  }
-}
-
 // إظهار رسالة خطأ Firebase
 function showFirebaseError() {
   const statusDiv = document.getElementById('firebaseStatus');
   statusDiv.innerHTML = '⚠️ تعذر الاتصال بقاعدة البيانات. يرجى إعادة تحميل الصفحة.';
   statusDiv.style.display = 'block';
+  statusDiv.classList.add('error');
   statusDiv.classList.remove('success');
 }
 
@@ -1461,10 +1448,36 @@ function showFirebaseSuccess() {
   const statusDiv = document.getElementById('firebaseStatus');
   statusDiv.innerHTML = '✅ تم الاتصال بقاعدة البيانات بنجاح';
   statusDiv.classList.add('success');
+  statusDiv.classList.remove('error');
   statusDiv.style.display = 'block';
   setTimeout(() => {
     statusDiv.style.display = 'none';
   }, 3000);
+}
+
+// تهيئة التطبيق
+function initializeApp() {
+  debugLog('Starting app initialization...');
+  
+  if (!firebaseInitialized) {
+    debugLog('Firebase not initialized', 'error');
+    showFirebaseError();
+    return;
+  }
+  
+  // التحقق من الجلسة المحفوظة
+  checkSavedSession();
+  
+  // تنظيف محاولات الدخول القديمة
+  cleanupOldLoginAttempts();
+  
+  // بدء مراقبة البيانات
+  listenToFirebaseChanges();
+  updateConnectionStatus();
+  updateNotificationBadge();
+  syncWithFirebase();
+  
+  debugLog('App initialized successfully', 'success');
 }
 
 // التحقق من الجلسة المحفوظة
@@ -1481,9 +1494,11 @@ function checkSavedSession() {
       sessionStartTime = sessionTime;
       updateUserInterface();
       startSessionTimer();
+      debugLog(`Session restored for user: ${user.username}`, 'success');
     } else {
       sessionStorage.removeItem('currentUser');
       sessionStorage.removeItem('sessionStartTime');
+      debugLog('Session expired', 'info');
     }
   }
 }
@@ -1550,11 +1565,13 @@ window.addEventListener('online', () => {
   isOnline = true;
   updateConnectionStatus();
   syncWithFirebase();
+  debugLog('Connection restored', 'success');
 });
 
 window.addEventListener('offline', () => {
   isOnline = false;
   updateConnectionStatus();
+  debugLog('Connection lost', 'error');
 });
 
 // تحديث حالة الاتصال
@@ -1573,35 +1590,37 @@ function updateConnectionStatus() {
 
 // مراقبة التغييرات في Firebase
 function listenToFirebaseChanges() {
-  if (!firebaseInitialized) return;
+  if (!firebaseInitialized) {
+    debugLog('Cannot listen to Firebase - not initialized', 'error');
+    return;
+  }
   
   try {
-    const applicationsRef = dbRef(database, 'applications');
+    const applicationsRef = database.ref('applications');
     
-    dbOnValue(applicationsRef, (snapshot) => {
+    applicationsRef.on('value', (snapshot) => {
       const data = snapshot.val();
       if (data) {
         applicationsData = Object.keys(data).map(key => ({
           ...data[key],
           id: key
         }));
-        updateNotificationBadge();
-        if (currentUser && document.getElementById('admin').classList.contains('active')) {
-          loadApplications();
-          updateStats();
-        }
+        debugLog(`Loaded ${applicationsData.length} applications`, 'success');
       } else {
         applicationsData = [];
-        if (currentUser && document.getElementById('admin').classList.contains('active')) {
-          loadApplications();
-          updateStats();
-        }
+        debugLog('No applications found', 'info');
+      }
+      
+      updateNotificationBadge();
+      if (currentUser && document.getElementById('admin').classList.contains('active')) {
+        loadApplications();
+        updateStats();
       }
     }, (error) => {
-      console.error('Firebase listen error:', error);
+      debugLog(`Firebase listen error: ${error.message}`, 'error');
     });
   } catch (error) {
-    console.error('Error setting up Firebase listener:', error);
+    debugLog(`Error setting up Firebase listener: ${error.message}`, 'error');
   }
 }
 
@@ -1612,8 +1631,10 @@ async function saveApplicationToFirebase(application) {
   }
   
   try {
-    const applicationsRef = dbRef(database, 'applications');
-    const newAppRef = dbPush(applicationsRef);
+    debugLog('Saving application to Firebase...');
+    
+    const applicationsRef = database.ref('applications');
+    const newAppRef = applicationsRef.push();
     
     // تحضير البيانات للحفظ
     const dataToSave = {
@@ -1625,17 +1646,15 @@ async function saveApplicationToFirebase(application) {
       date: application.date,
       status: application.status,
       notes: application.notes || '',
-      timestamp: serverTimestamp()
+      timestamp: firebase.database.ServerValue.TIMESTAMP
     };
     
-    console.log('Saving data:', dataToSave);
-    
-    await dbSet(newAppRef, dataToSave);
-    console.log('Data saved successfully with key:', newAppRef.key);
+    await newAppRef.set(dataToSave);
+    debugLog(`Application saved with ID: ${newAppRef.key}`, 'success');
     
     return newAppRef.key;
   } catch (error) {
-    console.error('Firebase save error:', error);
+    debugLog(`Firebase save error: ${error.message}`, 'error');
     throw error;
   }
 }
@@ -1676,6 +1695,7 @@ window.showError = function(message, elementId = 'errorMessage') {
       errorDiv.style.display = 'none';
     }, 5000);
   }
+  debugLog(`Error shown: ${message}`, 'error');
 }
 
 window.showSuccess = function(message) {
@@ -1687,6 +1707,7 @@ window.showSuccess = function(message) {
       successDiv.style.display = 'none';
     }, 5000);
   }
+  debugLog(`Success shown: ${message}`, 'success');
 }
 
 // عرض نافذة كلمة المرور
@@ -1760,6 +1781,7 @@ function loginSuccess(user) {
   localStorage.setItem('lastAdminVisit', new Date().toISOString());
   document.getElementById('notificationBadge').style.display = 'none';
   showSuccess(`مرحباً ${user.displayName}!`);
+  debugLog(`User logged in: ${user.username}`, 'success');
 }
 
 // دالة فشل تسجيل الدخول
@@ -1787,6 +1809,7 @@ function loginFailed(username, ip) {
   }
   
   document.getElementById('adminPassword').value = '';
+  debugLog(`Login failed for user: ${username}`, 'error');
 }
 
 // التحقق من حظر المستخدم
@@ -1907,6 +1930,7 @@ window.logoutAdmin = function(isTimeout = false) {
   if (!isTimeout) {
     showSuccess('تم تسجيل الخروج بنجاح');
   }
+  debugLog('User logged out', 'info');
 }
 
 // عرض التبويبات
@@ -1975,6 +1999,8 @@ document.getElementById('applyForm').addEventListener('submit', async function(e
     notes: ''
   };
   
+  debugLog(`Submitting application for: ${formData.ign}`);
+  
   document.getElementById('loader').style.display = 'block';
   document.getElementById('submitBtn').disabled = true;
   
@@ -1982,7 +2008,6 @@ document.getElementById('applyForm').addEventListener('submit', async function(e
     if (isOnline) {
       // حفظ في Firebase
       const appId = await saveApplicationToFirebase(formData);
-      console.log('Application saved with ID:', appId);
       showSuccess('✅ تم إرسال طلبك بنجاح! سنتواصل معك قريباً.');
       
       // إرسال إلى Formspree
@@ -1998,8 +2023,9 @@ document.getElementById('applyForm').addEventListener('submit', async function(e
             _subject: `طلب انضمام جديد من ${formData.ign}`
           })
         });
+        debugLog('Application sent to Formspree', 'success');
       } catch (formspreeError) {
-        console.error('Formspree error:', formspreeError);
+        debugLog(`Formspree error: ${formspreeError.message}`, 'error');
       }
     } else {
       // حفظ محلياً
@@ -2007,11 +2033,12 @@ document.getElementById('applyForm').addEventListener('submit', async function(e
       localApps.push({...formData, id: Date.now()});
       localStorage.setItem('pendingApplications', JSON.stringify(localApps));
       showSuccess('✅ تم حفظ طلبك محلياً وسيتم إرساله عند الاتصال بالإنترنت.');
+      debugLog('Application saved locally', 'info');
     }
     
     document.getElementById('applyForm').reset();
   } catch (error) {
-    console.error('Submit error:', error);
+    debugLog(`Submit error: ${error.message}`, 'error');
     showError('❌ حدث خطأ في الإرسال. حاول مرة أخرى.');
   } finally {
     document.getElementById('loader').style.display = 'none';
@@ -2146,10 +2173,11 @@ window.addNote = async function(id) {
   const note = prompt("أضف ملاحظة لهذا الطلب:", app.notes || "");
   if (note !== null) {
     try {
-      const noteRef = dbRef(database, `applications/${id}/notes`);
-      await dbSet(noteRef, note.trim());
+      debugLog(`Adding note to application ${id}`);
+      await database.ref(`applications/${id}/notes`).set(note.trim());
       showSuccess("تم إضافة الملاحظة بنجاح!");
     } catch (error) {
+      debugLog(`Error adding note: ${error.message}`, 'error');
       showError("خطأ في إضافة الملاحظة");
     }
   }
@@ -2160,10 +2188,11 @@ window.markAsRead = async function(id) {
   if (!currentUser || !hasPermission('edit') || !firebaseInitialized) return;
   
   try {
-    const statusRef = dbRef(database, `applications/${id}/status`);
-    await dbSet(statusRef, 'مقروء');
+    debugLog(`Marking application ${id} as read`);
+    await database.ref(`applications/${id}/status`).set('مقروء');
     showSuccess("تم تحديث الحالة!");
   } catch (error) {
+    debugLog(`Error updating status: ${error.message}`, 'error');
     showError("خطأ في تحديث الحالة");
   }
 }
@@ -2174,10 +2203,11 @@ window.removeApplication = async function(id) {
   
   if (confirm("هل أنت متأكد من حذف هذا الطلب؟")) {
     try {
-      const appRef = dbRef(database, `applications/${id}`);
-      await dbRemove(appRef);
+      debugLog(`Removing application ${id}`);
+      await database.ref(`applications/${id}`).remove();
       showSuccess("تم حذف الطلب بنجاح!");
     } catch (error) {
+      debugLog(`Error removing application: ${error.message}`, 'error');
       showError("خطأ في حذف الطلب");
     }
   }
@@ -2193,10 +2223,11 @@ window.clearAllApplications = async function() {
   if (confirm("هل أنت متأكد من حذف جميع الطلبات؟ هذا الإجراء لا يمكن التراجع عنه!")) {
     if (confirm("تأكيد نهائي: سيتم حذف " + applicationsData.length + " طلب نهائياً!")) {
       try {
-        const appsRef = dbRef(database, 'applications');
-        await dbRemove(appsRef);
+        debugLog('Clearing all applications...');
+        await database.ref('applications').remove();
         showSuccess("تم حذف جميع الطلبات!");
       } catch (error) {
+        debugLog(`Error clearing applications: ${error.message}`, 'error');
         showError("خطأ في حذف الطلبات");
       }
     }
@@ -2213,12 +2244,13 @@ window.syncWithFirebase = async function() {
   const pendingApps = JSON.parse(localStorage.getItem('pendingApplications') || '[]');
   if (pendingApps.length > 0 && isOnline) {
     showSuccess(`جاري مزامنة ${pendingApps.length} طلب...`);
+    debugLog(`Syncing ${pendingApps.length} pending applications`);
     
     for (const app of pendingApps) {
       try {
         await saveApplicationToFirebase(app);
       } catch (error) {
-        console.error('خطأ في مزامنة الطلب:', error);
+        debugLog(`Error syncing application: ${error.message}`, 'error');
       }
     }
     
@@ -2227,7 +2259,7 @@ window.syncWithFirebase = async function() {
   } else if (!isOnline) {
     showError("لا يمكن المزامنة - تحقق من اتصالك بالإنترنت");
   } else {
-    showSuccess("البيانات محدثة بالفعل!");
+    debugLog('No pending applications to sync', 'info');
   }
 }
 
@@ -2245,6 +2277,7 @@ window.exportApplications = function() {
   link.download = `exar_applications_${new Date().toISOString().split('T')[0]}.json`;
   link.click();
   showSuccess("تم تصدير البيانات بنجاح!");
+  debugLog('Applications exported', 'success');
 }
 
 // تصدير إلى CSV/Excel
@@ -2267,12 +2300,17 @@ window.exportToCSV = function() {
   link.download = `exar_applications_${new Date().toISOString().split('T')[0]}.csv`;
   link.click();
   showSuccess("تم تصدير البيانات إلى Excel بنجاح!");
+  debugLog('Applications exported to CSV', 'success');
 }
 
 // اضغط Enter للدخول
 document.addEventListener('DOMContentLoaded', function() {
-  // بدء تحميل Firebase
-  waitForFirebase();
+  debugLog('DOM loaded, initializing app...');
+  
+  // بدء التطبيق
+  setTimeout(() => {
+    initializeApp();
+  }, 500);
   
   // أحداث لوحة المفاتيح
   const usernameInput = document.getElementById('adminUsername');
@@ -2287,6 +2325,16 @@ document.addEventListener('DOMContentLoaded', function() {
       });
     }
   });
+});
+
+// Test Firebase connection on load
+window.addEventListener('load', () => {
+  setTimeout(() => {
+    if (!firebaseInitialized) {
+      debugLog('Firebase failed to initialize after page load', 'error');
+      showFirebaseError();
+    }
+  }, 3000);
 });
 </script>
 
