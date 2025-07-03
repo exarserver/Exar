@@ -794,6 +794,152 @@
       background: linear-gradient(135deg, #f56565 0%, #e53e3e 100%);
     }
     
+    /* User Badge */
+    .user-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      background: rgba(102, 126, 234, 0.2);
+      padding: 0.3rem 1rem;
+      border-radius: 20px;
+      font-weight: 600;
+    }
+    
+    .role-badge {
+      display: inline-block;
+      padding: 0.2rem 0.8rem;
+      border-radius: 15px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      margin-left: 0.5rem;
+    }
+    
+    .role-owner {
+      background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+      color: white;
+    }
+    
+    .role-admin {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+    }
+    
+    .role-moderator {
+      background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
+      color: white;
+    }
+    
+    /* Admin Tabs */
+    .admin-tabs {
+      display: flex;
+      gap: 0.5rem;
+      margin-bottom: 2rem;
+      border-bottom: 2px solid rgba(102, 126, 234, 0.2);
+      padding-bottom: 1rem;
+    }
+    
+    .admin-tab {
+      padding: 0.8rem 1.5rem;
+      background: transparent;
+      border: none;
+      color: #a0aec0;
+      font-weight: 600;
+      cursor: pointer;
+      border-radius: 10px 10px 0 0;
+      transition: all 0.3s ease;
+      position: relative;
+    }
+    
+    .admin-tab.active {
+      background: rgba(102, 126, 234, 0.2);
+      color: white;
+    }
+    
+    .admin-tab.active::after {
+      content: '';
+      position: absolute;
+      bottom: -3px;
+      left: 0;
+      right: 0;
+      height: 3px;
+      background: var(--gradient);
+    }
+    
+    /* Admin List */
+    .admin-list {
+      display: grid;
+      gap: 1rem;
+    }
+    
+    .admin-card {
+      background: rgba(26, 26, 46, 0.8);
+      border-radius: 15px;
+      padding: 1.5rem;
+      border: 1px solid rgba(102, 126, 234, 0.2);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      transition: all 0.3s ease;
+    }
+    
+    .admin-card:hover {
+      transform: translateX(5px);
+      border-color: rgba(102, 126, 234, 0.5);
+      box-shadow: 0 5px 20px rgba(102, 126, 234, 0.2);
+    }
+    
+    .admin-avatar {
+      width: 50px;
+      height: 50px;
+      border-radius: 50%;
+      background: var(--gradient);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: white;
+      margin-left: 1rem;
+    }
+    
+    .admin-details {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+    
+    .admin-meta {
+      color: #a0aec0;
+      font-size: 0.9rem;
+      margin-top: 0.3rem;
+    }
+    
+    /* Permissions Grid */
+    .permissions-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1rem;
+      margin-top: 1rem;
+    }
+    
+    .permission-item {
+      background: rgba(15, 15, 30, 0.5);
+      padding: 0.8rem;
+      border-radius: 10px;
+      text-align: center;
+      border: 1px solid rgba(102, 126, 234, 0.1);
+    }
+    
+    .permission-item.allowed {
+      border-color: rgba(72, 187, 120, 0.3);
+      background: rgba(72, 187, 120, 0.1);
+    }
+    
+    .permission-item.denied {
+      border-color: rgba(245, 101, 101, 0.3);
+      background: rgba(245, 101, 101, 0.1);
+    }
+    
     /* Footer */
     footer {
       background: rgba(15, 15, 30, 0.95);
@@ -838,6 +984,19 @@
       
       .auth-content {
         padding: 2rem;
+      }
+      
+      .admin-tabs {
+        flex-wrap: wrap;
+      }
+      
+      .admin-card {
+        flex-direction: column;
+        text-align: center;
+      }
+      
+      .admin-details {
+        flex-direction: column;
       }
     }
     
@@ -963,43 +1122,105 @@
 
     <!-- لوحة الإدارة -->
     <section id="admin">
-      <h2>لوحة الإدارة - المتقدمون</h2>
+      <h2>لوحة الإدارة</h2>
       
       <!-- معلومات المسؤول -->
       <div class="admin-info">
         <div>
-          <strong>🔐 لوحة الإدارة المحمية</strong>
+          <span class="user-badge">
+            👤 <span id="currentUserName">اسم المستخدم</span>
+            <span id="currentUserRole" class="role-badge"></span>
+          </span>
         </div>
         <button onclick="logoutAdmin()">تسجيل الخروج</button>
       </div>
       
-      <!-- أزرار الإدارة -->
-      <div style="margin-bottom: 2rem; display: flex; gap: 0.5rem; flex-wrap: wrap;">
-        <button onclick="exportApplications()" style="background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);">📥 تصدير البيانات</button>
-        <button onclick="exportToCSV()" style="background: linear-gradient(135deg, #ed8936 0%, #dd6b20 100%);">📊 تصدير Excel</button>
-        <button onclick="syncWithFirebase()" style="background: linear-gradient(135deg, #4299e1 0%, #3182ce 100%);">🔄 مزامنة البيانات</button>
-        <button onclick="clearAllApplications()" style="background: linear-gradient(135deg, #f56565 0%, #e53e3e 100%);">🗑️ مسح الكل</button>
+      <!-- التبويبات -->
+      <div class="admin-tabs">
+        <button class="admin-tab active" onclick="showAdminTab('applications')">
+          📋 الطلبات
+        </button>
+        <button class="admin-tab" onclick="showAdminTab('admins')" id="adminsTabBtn">
+          👥 الإداريين
+        </button>
       </div>
       
-      <!-- الإحصائيات -->
-      <div class="stats-container" id="statsContainer"></div>
-      
-      <!-- البحث والفلترة -->
-      <input type="text" id="searchInput" placeholder="🔍 البحث في الطلبات..." onkeyup="searchApplications()">
-      
-      <div class="filter-badges">
-        <div class="filter-badge active" onclick="filterByAge('all')">الكل</div>
-        <div class="filter-badge" onclick="filterByAge('10-15')">10-15 سنة</div>
-        <div class="filter-badge" onclick="filterByAge('16-20')">16-20 سنة</div>
-        <div class="filter-badge" onclick="filterByAge('21+')">21+ سنة</div>
+      <!-- محتوى التبويبات -->
+      <div id="applicationsTab" class="admin-tab-content">
+        <!-- أزرار الإدارة -->
+        <div style="margin-bottom: 2rem; display: flex; gap: 0.5rem; flex-wrap: wrap;">
+          <button onclick="exportApplications()" style="background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);">📥 تصدير البيانات</button>
+          <button onclick="exportToCSV()" style="background: linear-gradient(135deg, #ed8936 0%, #dd6b20 100%);">📊 تصدير Excel</button>
+          <button onclick="syncWithFirebase()" style="background: linear-gradient(135deg, #4299e1 0%, #3182ce 100%);">🔄 مزامنة البيانات</button>
+          <button onclick="clearAllApplications()" style="background: linear-gradient(135deg, #f56565 0%, #e53e3e 100%);" id="clearAllBtn">🗑️ مسح الكل</button>
+        </div>
+        
+        <!-- الإحصائيات -->
+        <div class="stats-container" id="statsContainer"></div>
+        
+        <!-- البحث والفلترة -->
+        <input type="text" id="searchInput" placeholder="🔍 البحث في الطلبات..." onkeyup="searchApplications()">
+        
+        <div class="filter-badges">
+          <div class="filter-badge active" onclick="filterByAge('all')">الكل</div>
+          <div class="filter-badge" onclick="filterByAge('10-15')">10-15 سنة</div>
+          <div class="filter-badge" onclick="filterByAge('16-20')">16-20 سنة</div>
+          <div class="filter-badge" onclick="filterByAge('21+')">21+ سنة</div>
+        </div>
+        
+        <div class="info-box">
+          <strong>☁️ البيانات محفوظة في السحابة</strong><br>
+          <small>✅ البيانات محفوظة في Firebase ويمكن الوصول إليها من أي جهاز.</small>
+        </div>
+        
+        <div id="applications"></div>
       </div>
       
-      <div class="info-box">
-        <strong>☁️ البيانات محفوظة في السحابة</strong><br>
-        <small>✅ البيانات محفوظة في Firebase ويمكن الوصول إليها من أي جهاز.</small>
+      <div id="adminsTab" class="admin-tab-content" style="display: none;">
+        <h3>قائمة الإداريين</h3>
+        
+        <div class="info-box">
+          <strong>👥 فريق الإدارة</strong><br>
+          <small>قائمة بجميع أعضاء فريق الإدارة ورتبهم</small>
+        </div>
+        
+        <div class="admin-list" id="adminsList"></div>
+        
+        <!-- معلومات الصلاحيات -->
+        <div class="content-card" style="margin-top: 2rem;">
+          <h4>📊 الصلاحيات حسب الرتبة</h4>
+          
+          <div style="margin-top: 1rem;">
+            <h5 style="color: #f093fb; margin-bottom: 0.5rem;">👑 المالك (Owner)</h5>
+            <div class="permissions-grid">
+              <div class="permission-item allowed">✅ جميع الصلاحيات</div>
+              <div class="permission-item allowed">✅ إدارة الإداريين</div>
+              <div class="permission-item allowed">✅ حذف جميع البيانات</div>
+              <div class="permission-item allowed">✅ تغيير الإعدادات</div>
+            </div>
+          </div>
+          
+          <div style="margin-top: 1.5rem;">
+            <h5 style="color: #667eea; margin-bottom: 0.5rem;">⚡ المدير (Admin)</h5>
+            <div class="permissions-grid">
+              <div class="permission-item allowed">✅ عرض الطلبات</div>
+              <div class="permission-item allowed">✅ حذف الطلبات</div>
+              <div class="permission-item allowed">✅ إضافة ملاحظات</div>
+              <div class="permission-item denied">❌ حذف جميع البيانات</div>
+            </div>
+          </div>
+          
+          <div style="margin-top: 1.5rem;">
+            <h5 style="color: #48bb78; margin-bottom: 0.5rem;">🛡️ المشرف (Moderator)</h5>
+            <div class="permissions-grid">
+              <div class="permission-item allowed">✅ عرض الطلبات</div>
+              <div class="permission-item allowed">✅ إضافة ملاحظات</div>
+              <div class="permission-item denied">❌ حذف الطلبات</div>
+              <div class="permission-item denied">❌ تصدير البيانات</div>
+            </div>
+          </div>
+        </div>
       </div>
-      
-      <div id="applications"></div>
     </section>
   </main>
 
@@ -1009,13 +1230,14 @@
       <button class="close-modal" onclick="closeAuthModal()">×</button>
       <div class="auth-header">
         <h3>🔐 دخول الإدارة</h3>
-        <p style="color: #a0aec0;">أدخل كلمة مرور الإدارة</p>
+        <p style="color: #a0aec0;">أدخل بيانات الدخول</p>
       </div>
       
       <div class="error-message alert" id="authError"></div>
       
+      <input type="text" id="adminUsername" placeholder="اسم المستخدم" style="text-align: center;" />
       <input type="password" id="adminPassword" placeholder="كلمة المرور" style="text-align: center;" />
-      <button onclick="checkPassword()">دخول</button>
+      <button onclick="checkLogin()">دخول</button>
     </div>
   </div>
 
@@ -1031,8 +1253,47 @@
 
 <script>
 // ===================================
-// غيّر كلمة المرور هنا فقط!
-const ADMIN_PASSWORD = "exar2025";
+// قائمة المستخدمين والصلاحيات
+const ADMIN_USERS = {
+  // المالك
+  "owner": {
+    username: "owner",
+    password: "exar2025owner",
+    role: "owner",
+    displayName: "مالك السيرفر",
+    permissions: ["all"]
+  },
+  // المدراء
+  "admin1": {
+    username: "admin1",
+    password: "admin123",
+    role: "admin",
+    displayName: "مدير 1",
+    permissions: ["view", "edit", "delete", "export"]
+  },
+  "admin2": {
+    username: "admin2",
+    password: "admin456",
+    role: "admin",
+    displayName: "مدير 2",
+    permissions: ["view", "edit", "delete", "export"]
+  },
+  // المشرفين
+  "mod1": {
+    username: "mod1",
+    password: "mod123",
+    role: "moderator",
+    displayName: "مشرف 1",
+    permissions: ["view", "edit"]
+  },
+  "mod2": {
+    username: "mod2",
+    password: "mod456",
+    role: "moderator",
+    displayName: "مشرف 2",
+    permissions: ["view", "edit"]
+  }
+};
 // ===================================
 
 // انتظار تحميل Firebase
@@ -1052,7 +1313,7 @@ const FORMSPREE_ENDPOINT = "https://formspree.io/f/mrbkjnbn";
 let applicationsData = [];
 let currentFilter = 'all';
 let isOnline = navigator.onLine;
-let isAdminLoggedIn = false;
+let currentUser = null;
 let database, dbRef, dbPush, dbSet, dbGet, dbOnValue, dbRemove, serverTimestamp;
 
 // دالة لتنظيف النصوص من HTML
@@ -1080,15 +1341,69 @@ function initializeApp() {
   serverTimestamp = fb.serverTimestamp;
   
   // التحقق من تسجيل الدخول المحفوظ
-  const savedLogin = sessionStorage.getItem('adminLoggedIn');
-  if (savedLogin === 'true') {
-    isAdminLoggedIn = true;
+  const savedUser = sessionStorage.getItem('currentUser');
+  if (savedUser) {
+    currentUser = JSON.parse(savedUser);
+    updateUserInterface();
   }
   
   listenToFirebaseChanges();
   updateConnectionStatus();
   updateNotificationBadge();
   syncWithFirebase();
+}
+
+// تحديث واجهة المستخدم
+function updateUserInterface() {
+  if (currentUser) {
+    document.getElementById('currentUserName').textContent = currentUser.displayName;
+    const roleElement = document.getElementById('currentUserRole');
+    roleElement.textContent = getRoleText(currentUser.role);
+    roleElement.className = `role-badge role-${currentUser.role}`;
+    
+    // تحديث الصلاحيات
+    updatePermissions();
+  }
+}
+
+// الحصول على نص الرتبة
+function getRoleText(role) {
+  const roles = {
+    'owner': 'المالك',
+    'admin': 'مدير',
+    'moderator': 'مشرف'
+  };
+  return roles[role] || role;
+}
+
+// تحديث الصلاحيات حسب المستخدم
+function updatePermissions() {
+  if (!currentUser) return;
+  
+  const permissions = currentUser.permissions;
+  const isOwner = currentUser.role === 'owner';
+  const isAdmin = currentUser.role === 'admin';
+  const isModerator = currentUser.role === 'moderator';
+  
+  // إظهار/إخفاء التبويبات
+  document.getElementById('adminsTabBtn').style.display = (isOwner || isAdmin) ? 'block' : 'none';
+  
+  // تحديث أزرار الإجراءات
+  if (document.getElementById('clearAllBtn')) {
+    document.getElementById('clearAllBtn').style.display = isOwner ? 'flex' : 'none';
+  }
+  
+  // تحديث صلاحيات الحذف في البطاقات
+  document.querySelectorAll('.delete-app-btn').forEach(btn => {
+    btn.style.display = (isOwner || isAdmin) ? 'block' : 'none';
+  });
+}
+
+// التحقق من الصلاحية
+function hasPermission(permission) {
+  if (!currentUser) return false;
+  if (currentUser.role === 'owner') return true;
+  return currentUser.permissions.includes(permission);
 }
 
 // مراقبة حالة الاتصال
@@ -1129,7 +1444,7 @@ function listenToFirebaseChanges() {
         id: key
       }));
       updateNotificationBadge();
-      if (isAdminLoggedIn && document.getElementById('admin').classList.contains('active')) {
+      if (currentUser && document.getElementById('admin').classList.contains('active')) {
         loadApplications();
         updateStats();
       }
@@ -1204,15 +1519,16 @@ window.showSuccess = function(message) {
 
 // عرض نافذة كلمة المرور
 window.showPasswordModal = function() {
-  if (isAdminLoggedIn) {
+  if (currentUser) {
     showSection('admin');
     loadApplications();
     updateStats();
+    loadAdmins();
     localStorage.setItem('lastAdminVisit', new Date().toISOString());
     document.getElementById('notificationBadge').style.display = 'none';
   } else {
     document.getElementById('authModal').classList.add('active');
-    document.getElementById('adminPassword').focus();
+    document.getElementById('adminUsername').focus();
   }
 }
 
@@ -1220,25 +1536,34 @@ window.showPasswordModal = function() {
 window.closeAuthModal = function() {
   document.getElementById('authModal').classList.remove('active');
   document.getElementById('authError').style.display = 'none';
+  document.getElementById('adminUsername').value = '';
   document.getElementById('adminPassword').value = '';
 }
 
-// التحقق من كلمة المرور
-window.checkPassword = function() {
-  const inputPassword = document.getElementById('adminPassword').value;
+// التحقق من تسجيل الدخول
+window.checkLogin = function() {
+  const username = document.getElementById('adminUsername').value.trim();
+  const password = document.getElementById('adminPassword').value;
   
-  if (inputPassword === ADMIN_PASSWORD) {
-    isAdminLoggedIn = true;
-    sessionStorage.setItem('adminLoggedIn', 'true');
+  // البحث عن المستخدم
+  const user = Object.values(ADMIN_USERS).find(u => 
+    u.username === username && u.password === password
+  );
+  
+  if (user) {
+    currentUser = user;
+    sessionStorage.setItem('currentUser', JSON.stringify(user));
+    updateUserInterface();
     closeAuthModal();
     showSection('admin');
     loadApplications();
     updateStats();
+    loadAdmins();
     localStorage.setItem('lastAdminVisit', new Date().toISOString());
     document.getElementById('notificationBadge').style.display = 'none';
-    showSuccess('مرحباً بك في لوحة الإدارة!');
+    showSuccess(`مرحباً ${user.displayName}!`);
   } else {
-    showError('كلمة المرور غير صحيحة!', 'authError');
+    showError('اسم المستخدم أو كلمة المرور غير صحيحة!', 'authError');
     document.getElementById('adminPassword').value = '';
   }
 }
@@ -1246,23 +1571,77 @@ window.checkPassword = function() {
 // تسجيل الخروج
 window.logoutAdmin = function() {
   if (confirm('هل تريد تسجيل الخروج؟')) {
-    isAdminLoggedIn = false;
-    sessionStorage.removeItem('adminLoggedIn');
+    currentUser = null;
+    sessionStorage.removeItem('currentUser');
     showSection('home');
     showSuccess('تم تسجيل الخروج بنجاح');
   }
 }
 
+// عرض التبويبات
+window.showAdminTab = function(tab) {
+  // إخفاء جميع التبويبات
+  document.querySelectorAll('.admin-tab-content').forEach(content => {
+    content.style.display = 'none';
+  });
+  
+  // إزالة الفعالية من جميع الأزرار
+  document.querySelectorAll('.admin-tab').forEach(btn => {
+    btn.classList.remove('active');
+  });
+  
+  // إظهار التبويب المحدد
+  document.getElementById(tab + 'Tab').style.display = 'block';
+  event.target.classList.add('active');
+  
+  // تحميل البيانات حسب التبويب
+  if (tab === 'admins') {
+    loadAdmins();
+  }
+}
+
+// تحميل قائمة الإداريين
+window.loadAdmins = function() {
+  const container = document.getElementById('adminsList');
+  container.innerHTML = '';
+  
+  Object.values(ADMIN_USERS).forEach(admin => {
+    const card = document.createElement('div');
+    card.className = 'admin-card';
+    
+    const roleClass = `role-${admin.role}`;
+    const roleText = getRoleText(admin.role);
+    const initial = admin.displayName.charAt(0);
+    
+    card.innerHTML = `
+      <div class="admin-details">
+        <div class="admin-avatar">${initial}</div>
+        <div>
+          <div style="font-weight: 600; font-size: 1.1rem;">${escapeHtml(admin.displayName)}</div>
+          <div class="admin-meta">@${escapeHtml(admin.username)}</div>
+        </div>
+      </div>
+      <span class="role-badge ${roleClass}">${roleText}</span>
+    `;
+    
+    container.appendChild(card);
+  });
+}
+
 // اضغط Enter للدخول
 document.addEventListener('DOMContentLoaded', function() {
+  const usernameInput = document.getElementById('adminUsername');
   const passwordInput = document.getElementById('adminPassword');
-  if (passwordInput) {
-    passwordInput.addEventListener('keypress', function(e) {
-      if (e.key === 'Enter') {
-        checkPassword();
-      }
-    });
-  }
+  
+  [usernameInput, passwordInput].forEach(input => {
+    if (input) {
+      input.addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+          checkLogin();
+        }
+      });
+    }
+  });
 });
 
 // معالج إرسال النموذج
@@ -1278,278 +1657,4 @@ document.getElementById('applyForm').addEventListener('submit', async function(e
     ign: document.getElementById('ign').value.trim(),
     discord: document.getElementById('discord').value.trim(),
     email: document.getElementById('email').value.trim() || 'غير محدد',
-    age: parseInt(document.getElementById('age').value.trim()),
-    reason: document.getElementById('reason').value.trim(),
-    date: new Date().toLocaleString('ar-SA'),
-    status: 'جديد',
-    notes: ''
-  };
-  
-  document.getElementById('loader').style.display = 'block';
-  document.getElementById('submitBtn').disabled = true;
-  
-  try {
-    if (isOnline) {
-      await saveApplicationToFirebase(formData);
-      showSuccess('✅ تم إرسال طلبك بنجاح! سنتواصل معك قريباً.');
-    } else {
-      const localApps = JSON.parse(localStorage.getItem('pendingApplications') || '[]');
-      localApps.push({...formData, id: Date.now()});
-      localStorage.setItem('pendingApplications', JSON.stringify(localApps));
-      showSuccess('✅ تم حفظ طلبك محلياً وسيتم إرساله عند الاتصال بالإنترنت.');
-    }
-    
-    if (isOnline) {
-      fetch(FORMSPREE_ENDPOINT, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json'
-        },
-        body: JSON.stringify({
-          ...formData,
-          _subject: `طلب انضمام جديد من ${formData.ign}`
-        })
-      }).catch(error => console.error('خطأ في Formspree:', error));
-    }
-    
-    document.getElementById('applyForm').reset();
-  } catch (error) {
-    console.error('خطأ:', error);
-    showError('❌ حدث خطأ في الإرسال. حاول مرة أخرى.');
-  } finally {
-    document.getElementById('loader').style.display = 'none';
-    document.getElementById('submitBtn').disabled = false;
-  }
-});
-
-// دالة تحديث الإحصائيات
-function updateStats() {
-  if (!isAdminLoggedIn) return;
-  
-  const container = document.getElementById('statsContainer');
-  const today = new Date().toDateString();
-  const todayApps = applicationsData.filter(app => new Date(app.date).toDateString() === today).length;
-  const avgAge = applicationsData.length > 0 
-    ? Math.round(applicationsData.reduce((sum, app) => sum + parseInt(app.age), 0) / applicationsData.length)
-    : 0;
-  
-  container.innerHTML = `
-    <div class="stat-card">
-      <div class="stat-number">${applicationsData.length}</div>
-      <div class="stat-label">إجمالي الطلبات</div>
-    </div>
-    <div class="stat-card">
-      <div class="stat-number">${todayApps}</div>
-      <div class="stat-label">طلبات اليوم</div>
-    </div>
-    <div class="stat-card">
-      <div class="stat-number">${avgAge}</div>
-      <div class="stat-label">متوسط العمر</div>
-    </div>
-    <div class="stat-card">
-      <div class="stat-number">${applicationsData.filter(app => app.notes).length}</div>
-      <div class="stat-label">طلبات بملاحظات</div>
-    </div>
-  `;
-}
-
-// البحث في الطلبات
-window.searchApplications = function() {
-  if (!isAdminLoggedIn) return;
-  
-  const searchTerm = document.getElementById('searchInput').value.toLowerCase();
-  const filteredApps = applicationsData.filter(app => {
-    return app.ign.toLowerCase().includes(searchTerm) ||
-           app.discord.toLowerCase().includes(searchTerm) ||
-           app.email.toLowerCase().includes(searchTerm) ||
-           app.reason.toLowerCase().includes(searchTerm) ||
-           app.age.toString().includes(searchTerm);
-  });
-  
-  displayApplications(filteredApps);
-}
-
-// الفلترة حسب العمر
-window.filterByAge = function(filter) {
-  currentFilter = filter;
-  
-  document.querySelectorAll('.filter-badge').forEach(badge => {
-    badge.classList.remove('active');
-  });
-  event.target.classList.add('active');
-  
-  let filteredApps = applicationsData;
-  
-  if (filter === '10-15') {
-    filteredApps = applicationsData.filter(app => app.age >= 10 && app.age <= 15);
-  } else if (filter === '16-20') {
-    filteredApps = applicationsData.filter(app => app.age >= 16 && app.age <= 20);
-  } else if (filter === '21+') {
-    filteredApps = applicationsData.filter(app => app.age >= 21);
-  }
-  
-  displayApplications(filteredApps);
-}
-
-// عرض الطلبات
-function displayApplications(apps) {
-  const container = document.getElementById("applications");
-  container.innerHTML = "";
-
-  if (apps.length === 0) {
-    container.innerHTML = "<p style='text-align: center; color: #a0aec0;'>لا توجد نتائج.</p>";
-    return;
-  }
-
-  apps.forEach((app, displayIndex) => {
-    const actualIndex = applicationsData.findIndex(a => a.id === app.id);
-    const card = document.createElement("div");
-    card.className = "application-card";
-    card.innerHTML = `
-      <div class="card-header">
-        طلب #${actualIndex + 1} - ${escapeHtml(app.date)}
-        ${app.status === 'جديد' ? '<span style="color: #68d391; float: left;">● جديد</span>' : ''}
-      </div>
-      <strong>الاسم داخل اللعبة:</strong> ${escapeHtml(app.ign)}<br>
-      <strong>العمر:</strong> ${escapeHtml(app.age)}<br>
-      <strong>ديسكورد:</strong> ${escapeHtml(app.discord)}<br>
-      <strong>البريد الإلكتروني:</strong> ${escapeHtml(app.email)}<br>
-      <strong>السبب:</strong> ${escapeHtml(app.reason)}<br>
-      ${app.notes ? `<div class="admin-note"><strong>ملاحظات الإدارة:</strong> ${escapeHtml(app.notes)}</div>` : ''}
-      <div class="action-buttons">
-        <button onclick="addNote('${app.id}')" style="background: linear-gradient(135deg, #4299e1 0%, #3182ce 100%);">📝 ملاحظة</button>
-        <button onclick="markAsRead('${app.id}')" style="background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);">✓ تم القراءة</button>
-        <button onclick="removeApplication('${app.id}')" style="background: linear-gradient(135deg, #f56565 0%, #e53e3e 100%);">حذف</button>
-      </div>
-    `;
-    container.appendChild(card);
-  });
-}
-
-// تحميل الطلبات
-window.loadApplications = function() {
-  if (isAdminLoggedIn) {
-    displayApplications(applicationsData);
-  }
-}
-
-// إضافة ملاحظة
-window.addNote = async function(id) {
-  if (!isAdminLoggedIn) return;
-  
-  const app = applicationsData.find(a => a.id === id);
-  const note = prompt("أضف ملاحظة لهذا الطلب:", app.notes || "");
-  if (note !== null) {
-    try {
-      const noteRef = dbRef(database, `applications/${id}/notes`);
-      await dbSet(noteRef, note.trim());
-      showSuccess("تم إضافة الملاحظة بنجاح!");
-    } catch (error) {
-      showError("خطأ في إضافة الملاحظة");
-    }
-  }
-}
-
-// تحديد كمقروء
-window.markAsRead = async function(id) {
-  if (!isAdminLoggedIn) return;
-  
-  try {
-    const statusRef = dbRef(database, `applications/${id}/status`);
-    await dbSet(statusRef, 'مقروء');
-  } catch (error) {
-    showError("خطأ في تحديث الحالة");
-  }
-}
-
-// حذف طلب
-window.removeApplication = async function(id) {
-  if (!isAdminLoggedIn) return;
-  
-  if (confirm("هل أنت متأكد من حذف هذا الطلب؟")) {
-    try {
-      const appRef = dbRef(database, `applications/${id}`);
-      await dbRemove(appRef);
-      showSuccess("تم حذف الطلب بنجاح!");
-    } catch (error) {
-      showError("خطأ في حذف الطلب");
-    }
-  }
-}
-
-// مسح جميع الطلبات
-window.clearAllApplications = async function() {
-  if (!isAdminLoggedIn) return;
-  
-  if (confirm("هل أنت متأكد من حذف جميع الطلبات؟ هذا الإجراء لا يمكن التراجع عنه!")) {
-    if (confirm("تأكيد نهائي: سيتم حذف " + applicationsData.length + " طلب نهائياً!")) {
-      try {
-        const appsRef = dbRef(database, 'applications');
-        await dbRemove(appsRef);
-        showSuccess("تم حذف جميع الطلبات!");
-      } catch (error) {
-        showError("خطأ في حذف الطلبات");
-      }
-    }
-  }
-}
-
-// المزامنة مع Firebase
-window.syncWithFirebase = async function() {
-  const pendingApps = JSON.parse(localStorage.getItem('pendingApplications') || '[]');
-  if (pendingApps.length > 0 && isOnline) {
-    showSuccess(`جاري مزامنة ${pendingApps.length} طلب...`);
-    
-    for (const app of pendingApps) {
-      try {
-        await saveApplicationToFirebase(app);
-      } catch (error) {
-        console.error('خطأ في مزامنة الطلب:', error);
-      }
-    }
-    
-    localStorage.removeItem('pendingApplications');
-    showSuccess("تمت المزامنة بنجاح!");
-  } else if (!isOnline) {
-    showError("لا يمكن المزامنة - تحقق من اتصالك بالإنترنت");
-  } else {
-    showSuccess("البيانات محدثة بالفعل!");
-  }
-}
-
-// تصدير البيانات
-window.exportApplications = function() {
-  if (!isAdminLoggedIn) return;
-  
-  const dataStr = JSON.stringify(applicationsData, null, 2);
-  const dataBlob = new Blob([dataStr], {type: 'application/json'});
-  const link = document.createElement('a');
-  link.href = URL.createObjectURL(dataBlob);
-  link.download = `exar_applications_${new Date().toISOString().split('T')[0]}.json`;
-  link.click();
-  showSuccess("تم تصدير البيانات بنجاح!");
-}
-
-// تصدير إلى CSV/Excel
-window.exportToCSV = function() {
-  if (!isAdminLoggedIn) return;
-  
-  let csv = '\ufeff';
-  csv += 'الاسم,العمر,ديسكورد,البريد الإلكتروني,السبب,التاريخ,الملاحظات\n';
-  
-  applicationsData.forEach(app => {
-    csv += `"${app.ign}","${app.age}","${app.discord}","${app.email}","${app.reason}","${app.date}","${app.notes || ''}"\n`;
-  });
-  
-  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-  const link = document.createElement('a');
-  link.href = URL.createObjectURL(blob);
-  link.download = `exar_applications_${new Date().toISOString().split('T')[0]}.csv`;
-  link.click();
-  showSuccess("تم تصدير البيانات إلى Excel بنجاح!");
-}
-</script>
-
-</body>
-</html>
+    age: parseInt(document.getElementById('age').value.
