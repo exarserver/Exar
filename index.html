@@ -1578,4 +1578,24 @@ document.getElementById('applyForm').addEventListener('submit', async function(e
   const formData = {
     ign: document.getElementById('ign').value.trim(),
     discord: document.getElementById('discord').value.trim(),
-    email: document.getElementById('email').value.trim() || 'غير محد
+    email: document.getElementById('email').value.trim() || 'غير محدد',
+    age: parseInt(document.getElementById('age').value.trim()),
+    reason: document.getElementById('reason').value.trim(),
+    date: new Date().toLocaleString('ar-SA'),
+    status: 'جديد',
+    notes: ''
+  };
+  
+  // التحقق من صحة البيانات
+  const validationErrors = validateInput(formData);
+  if (validationErrors.length > 0) {
+    showError('❌ ' + validationErrors.join(', '));
+    return;
+  }
+  
+  // التحقق من Rate Limiting (باستخدام البريد الإلكتروني + IP)
+  const identifier = formData.email + '_' + (navigator.userAgent || 'unknown');
+  if (!RateLimiter.checkLimit(identifier, 3, 3600000)) { // 3 محاولات في الساعة
+    const remaining = RateLimiter.getRemainingTime(identifier);
+    document.getElementById('rateLimitWarning').style.display = 'block';
+    document.getElementById('rateLimitWarning').textContent = `⚠️ تجاوزت الحد المسموح
