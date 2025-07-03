@@ -14,8 +14,8 @@
   
   <!-- Firebase -->
   <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-app.js";
-    import { getDatabase, ref, push, set, onValue, remove, serverTimestamp, get } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-database.js";
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-app.js";
+    import { getDatabase, ref, push, set, onValue, remove, serverTimestamp, get } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-database.js";
     
     const firebaseConfig = {
       apiKey: "AIzaSyB-il2jFPjrro4yYB-mGOZDNXGofOzzk1Q",
@@ -28,19 +28,25 @@
       measurementId: "G-RB7DBC8SV8"
     };
     
-    const app = initializeApp(firebaseConfig);
-    const database = getDatabase(app);
-    
-    window.firebaseDB = {
-      database,
-      ref,
-      push,
-      set,
-      get,
-      onValue,
-      remove,
-      serverTimestamp
-    };
+    try {
+      const app = initializeApp(firebaseConfig);
+      const database = getDatabase(app);
+      
+      window.firebaseDB = {
+        database,
+        ref,
+        push,
+        set,
+        get,
+        onValue,
+        remove,
+        serverTimestamp
+      };
+      
+      console.log('Firebase initialized successfully');
+    } catch (error) {
+      console.error('Firebase initialization error:', error);
+    }
   </script>
   
   <!-- تنسيقات CSS -->
@@ -1029,6 +1035,24 @@
       text-align: center;
       display: none;
     }
+
+    /* Firebase Connection Status */
+    .firebase-status {
+      background: rgba(237, 137, 54, 0.1);
+      border: 1px solid rgba(237, 137, 54, 0.3);
+      color: #f6ad55;
+      padding: 1rem;
+      border-radius: 10px;
+      margin-bottom: 1rem;
+      text-align: center;
+      display: none;
+    }
+
+    .firebase-status.success {
+      background: rgba(72, 187, 120, 0.1);
+      border: 1px solid rgba(72, 187, 120, 0.3);
+      color: #68d391;
+    }
   </style>
 </head>
 <body>
@@ -1081,6 +1105,7 @@
         ⚠️ تم الوصول إلى الحد الأقصى للطلبات. حاول مرة أخرى بعد قليل.
       </div>
       
+      <div class="firebase-status" id="firebaseStatus"></div>
       <div class="error-message alert" id="errorMessage"></div>
       <div class="success-message alert" id="successMessage"></div>
       
@@ -1274,14 +1299,14 @@
 // ===================================
 // إعدادات الأمان
 const SECURITY_CONFIG = {
-  maxLoginAttempts: 5, // الحد الأقصى لمحاولات تسجيل الدخول
-  lockoutDuration: 15 * 60 * 1000, // مدة الحظر: 15 دقيقة
-  sessionTimeout: 30 * 60 * 1000, // مهلة الجلسة: 30 دقيقة
-  requireTwoFactor: true, // تفعيل التحقق بخطوتين للمالك
-  secretKey: "EXAR2025SECRET" // مفتاح سري للتشفير
+  maxLoginAttempts: 5,
+  lockoutDuration: 15 * 60 * 1000,
+  sessionTimeout: 30 * 60 * 1000,
+  requireTwoFactor: true,
+  secretKey: "EXAR2025SECRET"
 };
 
-// دالة تشفير بسيطة (في الإنتاج يجب استخدام bcrypt أو مكتبة تشفير قوية)
+// دالة تشفير بسيطة
 function simpleHash(text) {
   let hash = 0;
   for (let i = 0; i < text.length; i++) {
@@ -1292,9 +1317,8 @@ function simpleHash(text) {
   return Math.abs(hash).toString(16);
 }
 
-// قائمة المستخدمين والصلاحيات (مع كلمات مرور مشفرة)
+// قائمة المستخدمين
 const ADMIN_USERS = {
-  // المالك
   "owner": {
     username: "owner",
     passwordHash: simpleHash("anoussa11"),
@@ -1302,9 +1326,8 @@ const ADMIN_USERS = {
     displayName: "مالك السيرفر",
     permissions: ["all"],
     requireTwoFactor: true,
-    twoFactorCode: "852741" // في الإنتاج يجب أن يكون ديناميكي
+    twoFactorCode: "852741"
   },
-  // المدراء
   "admin1": {
     username: "admin1",
     passwordHash: simpleHash("admin123"),
@@ -1321,7 +1344,6 @@ const ADMIN_USERS = {
     permissions: ["view", "edit", "delete", "export"],
     requireTwoFactor: false
   },
-  // المشرفين
   "mod1": {
     username: "mod1",
     passwordHash: simpleHash("mod123"),
@@ -1346,16 +1368,6 @@ let sessionStartTime = null;
 let sessionTimer = null;
 // ===================================
 
-// انتظار تحميل Firebase
-window.addEventListener('DOMContentLoaded', function() {
-  const checkFirebase = setInterval(() => {
-    if (window.firebaseDB) {
-      clearInterval(checkFirebase);
-      initializeApp();
-    }
-  }, 100);
-});
-
 // رابط Formspree
 const FORMSPREE_ENDPOINT = "https://formspree.io/f/mrbkjnbn";
 
@@ -1365,6 +1377,7 @@ let currentFilter = 'all';
 let isOnline = navigator.onLine;
 let currentUser = null;
 let database, dbRef, dbPush, dbSet, dbGet, dbOnValue, dbRemove, serverTimestamp;
+let firebaseInitialized = false;
 
 // دالة لتنظيف النصوص من HTML
 function escapeHtml(text) {
@@ -1378,19 +1391,84 @@ function escapeHtml(text) {
   return String(text).replace(/[&<>"']/g, m => map[m]);
 }
 
+// انتظار تحميل Firebase
+let initRetries = 0;
+const maxRetries = 50;
+
+function waitForFirebase() {
+  const checkInterval = setInterval(() => {
+    initRetries++;
+    
+    if (window.firebaseDB) {
+      clearInterval(checkInterval);
+      console.log('Firebase found, initializing...');
+      initializeApp();
+    } else if (initRetries > maxRetries) {
+      clearInterval(checkInterval);
+      console.error('Firebase failed to load after retries');
+      showFirebaseError();
+    }
+  }, 100);
+}
+
 // تهيئة التطبيق
 function initializeApp() {
-  const fb = window.firebaseDB;
-  database = fb.database;
-  dbRef = fb.ref;
-  dbPush = fb.push;
-  dbSet = fb.set;
-  dbGet = fb.get;
-  dbOnValue = fb.onValue;
-  dbRemove = fb.remove;
-  serverTimestamp = fb.serverTimestamp;
-  
-  // التحقق من تسجيل الدخول المحفوظ
+  try {
+    const fb = window.firebaseDB;
+    database = fb.database;
+    dbRef = fb.ref;
+    dbPush = fb.push;
+    dbSet = fb.set;
+    dbGet = fb.get;
+    dbOnValue = fb.onValue;
+    dbRemove = fb.remove;
+    serverTimestamp = fb.serverTimestamp;
+    
+    firebaseInitialized = true;
+    console.log('App initialized successfully');
+    
+    // إظهار رسالة نجاح Firebase
+    showFirebaseSuccess();
+    
+    // التحقق من تسجيل الدخول المحفوظ
+    checkSavedSession();
+    
+    // تنظيف محاولات الدخول القديمة
+    cleanupOldLoginAttempts();
+    
+    // بدء مراقبة البيانات
+    listenToFirebaseChanges();
+    updateConnectionStatus();
+    updateNotificationBadge();
+    syncWithFirebase();
+    
+  } catch (error) {
+    console.error('App initialization error:', error);
+    showFirebaseError();
+  }
+}
+
+// إظهار رسالة خطأ Firebase
+function showFirebaseError() {
+  const statusDiv = document.getElementById('firebaseStatus');
+  statusDiv.innerHTML = '⚠️ تعذر الاتصال بقاعدة البيانات. يرجى إعادة تحميل الصفحة.';
+  statusDiv.style.display = 'block';
+  statusDiv.classList.remove('success');
+}
+
+// إظهار رسالة نجاح Firebase
+function showFirebaseSuccess() {
+  const statusDiv = document.getElementById('firebaseStatus');
+  statusDiv.innerHTML = '✅ تم الاتصال بقاعدة البيانات بنجاح';
+  statusDiv.classList.add('success');
+  statusDiv.style.display = 'block';
+  setTimeout(() => {
+    statusDiv.style.display = 'none';
+  }, 3000);
+}
+
+// التحقق من الجلسة المحفوظة
+function checkSavedSession() {
   const savedUser = sessionStorage.getItem('currentUser');
   const savedSessionTime = sessionStorage.getItem('sessionStartTime');
   
@@ -1398,26 +1476,16 @@ function initializeApp() {
     const user = JSON.parse(savedUser);
     const sessionTime = parseInt(savedSessionTime);
     
-    // التحقق من انتهاء الجلسة
     if (Date.now() - sessionTime < SECURITY_CONFIG.sessionTimeout) {
       currentUser = user;
       sessionStartTime = sessionTime;
       updateUserInterface();
       startSessionTimer();
     } else {
-      // الجلسة منتهية
       sessionStorage.removeItem('currentUser');
       sessionStorage.removeItem('sessionStartTime');
     }
   }
-  
-  // تنظيف محاولات الدخول القديمة
-  cleanupOldLoginAttempts();
-  
-  listenToFirebaseChanges();
-  updateConnectionStatus();
-  updateNotificationBadge();
-  syncWithFirebase();
 }
 
 // تنظيف محاولات الدخول القديمة
@@ -1425,7 +1493,6 @@ function cleanupOldLoginAttempts() {
   const now = Date.now();
   Object.keys(loginAttempts).forEach(username => {
     const attempt = loginAttempts[username];
-    // حذف المحاولات التي مضى عليها أكثر من ساعة
     if (now - attempt.lastAttempt > 3600000) {
       delete loginAttempts[username];
     }
@@ -1439,8 +1506,6 @@ function updateUserInterface() {
     const roleElement = document.getElementById('currentUserRole');
     roleElement.textContent = getRoleText(currentUser.role);
     roleElement.className = `role-badge role-${currentUser.role}`;
-    
-    // تحديث الصلاحيات
     updatePermissions();
   }
 }
@@ -1455,24 +1520,19 @@ function getRoleText(role) {
   return roles[role] || role;
 }
 
-// تحديث الصلاحيات حسب المستخدم
+// تحديث الصلاحيات
 function updatePermissions() {
   if (!currentUser) return;
   
-  const permissions = currentUser.permissions;
   const isOwner = currentUser.role === 'owner';
   const isAdmin = currentUser.role === 'admin';
-  const isModerator = currentUser.role === 'moderator';
   
-  // إظهار/إخفاء التبويبات
   document.getElementById('adminsTabBtn').style.display = (isOwner || isAdmin) ? 'block' : 'none';
   
-  // تحديث أزرار الإجراءات
   if (document.getElementById('clearAllBtn')) {
     document.getElementById('clearAllBtn').style.display = isOwner ? 'flex' : 'none';
   }
   
-  // تحديث صلاحيات الحذف في البطاقات
   document.querySelectorAll('.delete-app-btn').forEach(btn => {
     btn.style.display = (isOwner || isAdmin) ? 'block' : 'none';
   });
@@ -1513,36 +1573,69 @@ function updateConnectionStatus() {
 
 // مراقبة التغييرات في Firebase
 function listenToFirebaseChanges() {
-  const applicationsRef = dbRef(database, 'applications');
+  if (!firebaseInitialized) return;
   
-  dbOnValue(applicationsRef, (snapshot) => {
-    const data = snapshot.val();
-    if (data) {
-      applicationsData = Object.keys(data).map(key => ({
-        ...data[key],
-        id: key
-      }));
-      updateNotificationBadge();
-      if (currentUser && document.getElementById('admin').classList.contains('active')) {
-        loadApplications();
-        updateStats();
+  try {
+    const applicationsRef = dbRef(database, 'applications');
+    
+    dbOnValue(applicationsRef, (snapshot) => {
+      const data = snapshot.val();
+      if (data) {
+        applicationsData = Object.keys(data).map(key => ({
+          ...data[key],
+          id: key
+        }));
+        updateNotificationBadge();
+        if (currentUser && document.getElementById('admin').classList.contains('active')) {
+          loadApplications();
+          updateStats();
+        }
+      } else {
+        applicationsData = [];
+        if (currentUser && document.getElementById('admin').classList.contains('active')) {
+          loadApplications();
+          updateStats();
+        }
       }
-    }
-  });
+    }, (error) => {
+      console.error('Firebase listen error:', error);
+    });
+  } catch (error) {
+    console.error('Error setting up Firebase listener:', error);
+  }
 }
 
 // حفظ الطلب في Firebase
 async function saveApplicationToFirebase(application) {
+  if (!firebaseInitialized) {
+    throw new Error('Firebase not initialized');
+  }
+  
   try {
     const applicationsRef = dbRef(database, 'applications');
     const newAppRef = dbPush(applicationsRef);
-    await dbSet(newAppRef, {
-      ...application,
+    
+    // تحضير البيانات للحفظ
+    const dataToSave = {
+      ign: application.ign,
+      discord: application.discord,
+      email: application.email || 'غير محدد',
+      age: application.age,
+      reason: application.reason,
+      date: application.date,
+      status: application.status,
+      notes: application.notes || '',
       timestamp: serverTimestamp()
-    });
+    };
+    
+    console.log('Saving data:', dataToSave);
+    
+    await dbSet(newAppRef, dataToSave);
+    console.log('Data saved successfully with key:', newAppRef.key);
+    
     return newAppRef.key;
   } catch (error) {
-    console.error('خطأ في حفظ البيانات:', error);
+    console.error('Firebase save error:', error);
     throw error;
   }
 }
@@ -1623,22 +1716,19 @@ window.closeAuthModal = function() {
 window.checkLogin = function() {
   const username = document.getElementById('adminUsername').value.trim();
   const password = document.getElementById('adminPassword').value;
-  const ip = 'USER_IP'; // في الإنتاج يجب الحصول على IP الحقيقي
+  const ip = 'USER_IP';
   
-  // التحقق من الحظر
   if (isUserLocked(username)) {
     const remainingTime = getRemainingLockTime(username);
     showError(`تم حظر الحساب. حاول مرة أخرى بعد ${Math.ceil(remainingTime / 60000)} دقيقة`, 'authError');
     return;
   }
   
-  // البحث عن المستخدم والتحقق من كلمة المرور
   const user = Object.values(ADMIN_USERS).find(u => 
     u.username === username && u.passwordHash === simpleHash(password)
   );
   
   if (user) {
-    // إذا كان يتطلب التحقق بخطوتين
     if (user.requireTwoFactor && SECURITY_CONFIG.requireTwoFactor) {
       showTwoFactorModal(user);
     } else {
@@ -1656,13 +1746,8 @@ function loginSuccess(user) {
   sessionStartTime = Date.now();
   sessionStorage.setItem('sessionStartTime', sessionStartTime);
   
-  // بدء مؤقت الجلسة
   startSessionTimer();
-  
-  // تسجيل الدخول الناجح
   logLoginAttempt(user.username, true, 'USER_IP');
-  
-  // إعادة تعيين محاولات الفشل
   delete loginAttempts[user.username];
   
   updateUserInterface();
@@ -1679,7 +1764,6 @@ function loginSuccess(user) {
 
 // دالة فشل تسجيل الدخول
 function loginFailed(username, ip) {
-  // زيادة عدد المحاولات الفاشلة
   if (!loginAttempts[username]) {
     loginAttempts[username] = {
       count: 0,
@@ -1691,13 +1775,11 @@ function loginFailed(username, ip) {
   loginAttempts[username].count++;
   loginAttempts[username].lastAttempt = Date.now();
   
-  // تسجيل المحاولة الفاشلة
   logLoginAttempt(username, false, ip);
   
   const remainingAttempts = SECURITY_CONFIG.maxLoginAttempts - loginAttempts[username].count;
   
   if (remainingAttempts <= 0) {
-    // حظر المستخدم
     loginAttempts[username].lockedUntil = Date.now() + SECURITY_CONFIG.lockoutDuration;
     showError('تم حظر الحساب بسبب محاولات دخول فاشلة متعددة!', 'authError');
   } else {
@@ -1723,12 +1805,11 @@ function getRemainingLockTime(username) {
 
 // بدء مؤقت الجلسة
 function startSessionTimer() {
-  // إلغاء المؤقت السابق إن وجد
   if (sessionTimer) clearInterval(sessionTimer);
   
   sessionTimer = setInterval(() => {
     checkSessionTimeout();
-  }, 60000); // التحقق كل دقيقة
+  }, 60000);
 }
 
 // التحقق من انتهاء الجلسة
@@ -1753,7 +1834,6 @@ function logLoginAttempt(username, success, ip) {
     userAgent: navigator.userAgent
   });
   
-  // الاحتفاظ بآخر 100 سجل فقط
   if (logs.length > 100) {
     logs.splice(0, logs.length - 100);
   }
@@ -1784,7 +1864,6 @@ function showTwoFactorModal(user) {
     </div>
   `;
   
-  // إضافة النافذة للصفحة
   const tempDiv = document.createElement('div');
   tempDiv.innerHTML = modalHtml;
   document.body.appendChild(tempDiv.firstElementChild);
@@ -1819,7 +1898,6 @@ window.logoutAdmin = function(isTimeout = false) {
   sessionStorage.removeItem('currentUser');
   sessionStorage.removeItem('sessionStartTime');
   
-  // إيقاف مؤقت الجلسة
   if (sessionTimer) {
     clearInterval(sessionTimer);
     sessionTimer = null;
@@ -1833,21 +1911,17 @@ window.logoutAdmin = function(isTimeout = false) {
 
 // عرض التبويبات
 window.showAdminTab = function(tab) {
-  // إخفاء جميع التبويبات
   document.querySelectorAll('.admin-tab-content').forEach(content => {
     content.style.display = 'none';
   });
   
-  // إزالة الفعالية من جميع الأزرار
   document.querySelectorAll('.admin-tab').forEach(btn => {
     btn.classList.remove('active');
   });
   
-  // إظهار التبويب المحدد
   document.getElementById(tab + 'Tab').style.display = 'block';
   event.target.classList.add('active');
   
-  // تحميل البيانات حسب التبويب
   if (tab === 'admins') {
     loadAdmins();
   }
@@ -1881,27 +1955,11 @@ window.loadAdmins = function() {
   });
 }
 
-// اضغط Enter للدخول
-document.addEventListener('DOMContentLoaded', function() {
-  const usernameInput = document.getElementById('adminUsername');
-  const passwordInput = document.getElementById('adminPassword');
-  
-  [usernameInput, passwordInput].forEach(input => {
-    if (input) {
-      input.addEventListener('keypress', function(e) {
-        if (e.key === 'Enter') {
-          checkLogin();
-        }
-      });
-    }
-  });
-});
-
 // معالج إرسال النموذج
 document.getElementById('applyForm').addEventListener('submit', async function(e) {
   e.preventDefault();
   
-  if (!database) {
+  if (!firebaseInitialized) {
     showError('⚠️ يرجى الانتظار حتى يتم تحميل الصفحة بالكامل');
     return;
   }
@@ -1922,32 +1980,38 @@ document.getElementById('applyForm').addEventListener('submit', async function(e
   
   try {
     if (isOnline) {
-      await saveApplicationToFirebase(formData);
+      // حفظ في Firebase
+      const appId = await saveApplicationToFirebase(formData);
+      console.log('Application saved with ID:', appId);
       showSuccess('✅ تم إرسال طلبك بنجاح! سنتواصل معك قريباً.');
+      
+      // إرسال إلى Formspree
+      try {
+        await fetch(FORMSPREE_ENDPOINT, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+          },
+          body: JSON.stringify({
+            ...formData,
+            _subject: `طلب انضمام جديد من ${formData.ign}`
+          })
+        });
+      } catch (formspreeError) {
+        console.error('Formspree error:', formspreeError);
+      }
     } else {
+      // حفظ محلياً
       const localApps = JSON.parse(localStorage.getItem('pendingApplications') || '[]');
       localApps.push({...formData, id: Date.now()});
       localStorage.setItem('pendingApplications', JSON.stringify(localApps));
       showSuccess('✅ تم حفظ طلبك محلياً وسيتم إرساله عند الاتصال بالإنترنت.');
     }
     
-    if (isOnline) {
-      fetch(FORMSPREE_ENDPOINT, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json'
-        },
-        body: JSON.stringify({
-          ...formData,
-          _subject: `طلب انضمام جديد من ${formData.ign}`
-        })
-      }).catch(error => console.error('خطأ في Formspree:', error));
-    }
-    
     document.getElementById('applyForm').reset();
   } catch (error) {
-    console.error('خطأ:', error);
+    console.error('Submit error:', error);
     showError('❌ حدث خطأ في الإرسال. حاول مرة أخرى.');
   } finally {
     document.getElementById('loader').style.display = 'none';
@@ -2039,7 +2103,6 @@ function displayApplications(apps) {
     const card = document.createElement("div");
     card.className = "application-card";
     
-    // الأزرار حسب الصلاحيات
     let actionButtons = '';
     if (hasPermission('edit')) {
       actionButtons += `<button onclick="addNote('${app.id}')" style="background: linear-gradient(135deg, #4299e1 0%, #3182ce 100%);">📝 ملاحظة</button>`;
@@ -2077,7 +2140,7 @@ window.loadApplications = function() {
 
 // إضافة ملاحظة
 window.addNote = async function(id) {
-  if (!currentUser || !hasPermission('edit')) return;
+  if (!currentUser || !hasPermission('edit') || !firebaseInitialized) return;
   
   const app = applicationsData.find(a => a.id === id);
   const note = prompt("أضف ملاحظة لهذا الطلب:", app.notes || "");
@@ -2094,11 +2157,12 @@ window.addNote = async function(id) {
 
 // تحديد كمقروء
 window.markAsRead = async function(id) {
-  if (!currentUser || !hasPermission('edit')) return;
+  if (!currentUser || !hasPermission('edit') || !firebaseInitialized) return;
   
   try {
     const statusRef = dbRef(database, `applications/${id}/status`);
     await dbSet(statusRef, 'مقروء');
+    showSuccess("تم تحديث الحالة!");
   } catch (error) {
     showError("خطأ في تحديث الحالة");
   }
@@ -2106,7 +2170,7 @@ window.markAsRead = async function(id) {
 
 // حذف طلب
 window.removeApplication = async function(id) {
-  if (!currentUser || !hasPermission('delete')) return;
+  if (!currentUser || !hasPermission('delete') || !firebaseInitialized) return;
   
   if (confirm("هل أنت متأكد من حذف هذا الطلب؟")) {
     try {
@@ -2121,7 +2185,7 @@ window.removeApplication = async function(id) {
 
 // مسح جميع الطلبات
 window.clearAllApplications = async function() {
-  if (!currentUser || !hasPermission('all')) {
+  if (!currentUser || !hasPermission('all') || !firebaseInitialized) {
     showError("ليس لديك صلاحية لتنفيذ هذا الإجراء!");
     return;
   }
@@ -2141,6 +2205,11 @@ window.clearAllApplications = async function() {
 
 // المزامنة مع Firebase
 window.syncWithFirebase = async function() {
+  if (!firebaseInitialized) {
+    showError("Firebase غير مهيأ بعد");
+    return;
+  }
+  
   const pendingApps = JSON.parse(localStorage.getItem('pendingApplications') || '[]');
   if (pendingApps.length > 0 && isOnline) {
     showSuccess(`جاري مزامنة ${pendingApps.length} طلب...`);
@@ -2199,6 +2268,26 @@ window.exportToCSV = function() {
   link.click();
   showSuccess("تم تصدير البيانات إلى Excel بنجاح!");
 }
+
+// اضغط Enter للدخول
+document.addEventListener('DOMContentLoaded', function() {
+  // بدء تحميل Firebase
+  waitForFirebase();
+  
+  // أحداث لوحة المفاتيح
+  const usernameInput = document.getElementById('adminUsername');
+  const passwordInput = document.getElementById('adminPassword');
+  
+  [usernameInput, passwordInput].forEach(input => {
+    if (input) {
+      input.addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+          checkLogin();
+        }
+      });
+    }
+  });
+});
 </script>
 
 </body>
